@@ -1,0 +1,27 @@
+# 1. ベーススタイル
+BasedOnStyle: Google
+
+# 2. C言語 / チーム開発向けのおすすめ上書き
+# ---
+
+# インデントはタブではなくスペースを4つ使う
+IndentWidth: 4
+UseTab: Never
+
+# 1行の最大文字数 (Google標準は80ですが、現代のモニタに合わせて100に)
+ColumnLimit: 100
+
+# ポインタの * の位置を、型の隣ではなく変数名の隣にする
+# (C言語で一般的な "char *p" スタイル)
+PointerAlignment: Right
+
+# { } を改行するスタイル (Allmanスタイル)
+# C言語では、関数やif文の { を次の行に書くこのスタイルが一般的です
+#
+# void func() {  ← Googleスタイル
+# }
+#
+# void func()    ← Allmanスタイル
+# {
+# }
+BreakBeforeBraces: Allman
