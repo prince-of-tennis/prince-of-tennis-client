@@ -4,9 +4,8 @@
 
 void init_looper(Looper *looper, eSceneType default_scene)
 {
-    looper->default_scene = default_scene;
     looper->scene_manager = make_unique<SceneManager>();
-    looper->scene_manager->current_scene = looper->default_scene;
+    init_scene_manager(looper->scene_manager, default_scene);
 }
 
 void loop(Looper *looper)

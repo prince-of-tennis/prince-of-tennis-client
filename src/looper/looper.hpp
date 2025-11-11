@@ -10,7 +10,6 @@ using namespace std;
 
 struct Looper
 {
-    eSceneType default_scene;
     unique_ptr<SceneManager> scene_manager;
 };
 
