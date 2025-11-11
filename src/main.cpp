@@ -4,7 +4,9 @@
 
 int main(void)
 {
-    update_scene(SCENE_GAME);
+    init_scene_manager(SCENE_TITLE);
+    change_scene(SCENE_GAME);
+    update_scene();
 
     return 0;
 }

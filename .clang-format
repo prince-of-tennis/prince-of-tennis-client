@@ -25,3 +25,5 @@ PointerAlignment: Right
 # {
 # }
 BreakBeforeBraces: Allman
+
+AllowShortFunctionsOnASingleLine: None
