@@ -17,7 +17,6 @@ struct Looper
 void init_looper(Looper *looper, eSceneType default_scene);
 
 /// @brief ループ処理
-/// @return ループするか
 void loop(Looper *looper);
 
 /// @brief looperの終了処理
