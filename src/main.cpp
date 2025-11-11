@@ -1,12 +1,13 @@
 #include <stdio.h>
 
-#include "scene_manager/scene_manager.hpp"
+#include "looper/looper.hpp"
 
 int main(void)
 {
-    init_scene_manager(SCENE_TITLE);
-    change_scene(SCENE_GAME);
-    update_scene();
+    Looper looper;
+    init_looper(&looper, SCENE_TITLE);
+    loop(&looper);
+    finalize_looper(&looper);
 
     return 0;
 }

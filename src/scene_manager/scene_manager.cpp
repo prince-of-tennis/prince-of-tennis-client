@@ -2,17 +2,16 @@
 
 #include "util/log.hpp"
 
-static void init_scene(scene_type scene);
-static void set_scene(scene_type scene);
+static void init_scene(unique_ptr<SceneManager> &mgr, eSceneType scene);
+static void fini_scene(unique_ptr<SceneManager> &mgr);
+static void set_scene(unique_ptr<SceneManager> &mgr, eSceneType scene);
 
-static scene_type g_current_scene;
-
-void init_scene_manager(scene_type default_scene)
+void init_scene_manager(unique_ptr<SceneManager> &mgr, eSceneType default_scene)
 {
-    set_scene(default_scene);
+    set_scene(mgr, default_scene);
 }
 
-static void init_scene(scene_type scene)
+static void init_scene(unique_ptr<SceneManager> &mgr, eSceneType scene)
 {
     // MARK: 初期化
     // ここにそれぞれのシーンの初期化処理を記述する
@@ -32,29 +31,32 @@ static void init_scene(scene_type scene)
     }
 }
 
-SDL_bool update_scene()
+SDL_bool update_scene(unique_ptr<SceneManager> &mgr)
 {
     // MARK: メイン処理
     // ここにそれぞれのシーンで毎回実行する処理を記述する
-    switch (g_current_scene)
+    switch (mgr->current_scene)
     {
-        case SCENE_GAME:
-            LOG_DEBUG("SCENE_GAME");
-            break;
-
         case SCENE_TITLE:
             LOG_DEBUG("SCENE_TITLE");
-            break;
-    }
+            change_scene(mgr, SCENE_GAME);
+            return SDL_TRUE;
 
-    return SDL_TRUE;
+        case SCENE_GAME:
+            LOG_DEBUG("SCENE_GAME");
+            return SDL_FALSE;
+
+        default:
+            LOG_ERROR("不正なシーンが渡されています");
+            return SDL_FALSE;
+    }
 }
 
-void change_scene(scene_type scene)
+static void fini_scene(unique_ptr<SceneManager> &mgr)
 {
     // MARK: 終了処理
     // ここにそれぞれのシーンの終了処理を記述する
-    switch (g_current_scene)
+    switch (mgr->current_scene)
     {
         case SCENE_TITLE:
             LOG_DEBUG("SCENE_TITLEを終了します。");
@@ -67,14 +69,23 @@ void change_scene(scene_type scene)
             LOG_ERROR("不正なシーンが渡されました。");
             break;
     }
+}
 
-    set_scene(scene);
+void fini_scene_manager(unique_ptr<SceneManager> &mgr)
+{
+    fini_scene(mgr);
+}
+
+void change_scene(unique_ptr<SceneManager> &mgr, eSceneType scene)
+{
+    fini_scene(mgr);
+    set_scene(mgr, scene);
 }
 
 /// @brief シーンを設定する
 /// @param scene シーン
-static void set_scene(scene_type scene)
+static void set_scene(unique_ptr<SceneManager> &mgr, eSceneType scene)
 {
-    init_scene(scene);
-    g_current_scene = scene;
+    init_scene(mgr, scene);
+    mgr->current_scene = scene;
 }
