@@ -2,7 +2,7 @@
 
 #include "util/log.hpp"
 
-static void init_scene(unique_ptr<SceneManager> &mgr, eSceneType scene);
+static void init_scene(unique_ptr<SceneManager> &mgr);
 static void fini_scene(unique_ptr<SceneManager> &mgr);
 static void set_scene(unique_ptr<SceneManager> &mgr, eSceneType scene);
 
@@ -11,11 +11,11 @@ void init_scene_manager(unique_ptr<SceneManager> &mgr, eSceneType default_scene)
     set_scene(mgr, default_scene);
 }
 
-static void init_scene(unique_ptr<SceneManager> &mgr, eSceneType scene)
+static void init_scene(unique_ptr<SceneManager> &mgr)
 {
     // MARK: 初期化
     // ここにそれぞれのシーンの初期化処理を記述する
-    switch (scene)
+    switch (mgr->current_scene)
     {
         case SCENE_TITLE:
             LOG_DEBUG("SCENE_TITLEを初期化します。");
@@ -86,6 +86,6 @@ void change_scene(unique_ptr<SceneManager> &mgr, eSceneType scene)
 /// @param scene シーン
 static void set_scene(unique_ptr<SceneManager> &mgr, eSceneType scene)
 {
-    init_scene(mgr, scene);
     mgr->current_scene = scene;
+    init_scene(mgr);
 }
