@@ -7,6 +7,8 @@ project(SuperDimensionalTennisClient CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+add_compile_definitions(DEBUG=1)
+
 # 2. ライブラリの検索
 # -----------------
 # システム (apt-get) でインストールしたライブラリを探す
