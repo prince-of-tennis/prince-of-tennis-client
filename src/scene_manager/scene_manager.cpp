@@ -6,7 +6,7 @@ static void init_scene(unique_ptr<SceneManager> &mgr);
 static void fini_scene(unique_ptr<SceneManager> &mgr);
 static void set_scene(unique_ptr<SceneManager> &mgr, eSceneType scene);
 
-void init_scene_manager(unique_ptr<SceneManager> &mgr, eSceneType default_scene)
+void scene_manager_init(unique_ptr<SceneManager> &mgr, eSceneType default_scene)
 {
     set_scene(mgr, default_scene);
 }
@@ -31,7 +31,7 @@ static void init_scene(unique_ptr<SceneManager> &mgr)
     }
 }
 
-SDL_bool update_scene(unique_ptr<SceneManager> &mgr)
+SDL_bool scene_update(unique_ptr<SceneManager> &mgr)
 {
     // MARK: メイン処理
     // ここにそれぞれのシーンで毎回実行する処理を記述する
@@ -39,7 +39,7 @@ SDL_bool update_scene(unique_ptr<SceneManager> &mgr)
     {
         case SCENE_TITLE:
             LOG_DEBUG("SCENE_TITLE");
-            change_scene(mgr, SCENE_GAME);
+            scene_change(mgr, SCENE_GAME);
             return SDL_TRUE;
 
         case SCENE_GAME:
@@ -71,12 +71,12 @@ static void fini_scene(unique_ptr<SceneManager> &mgr)
     }
 }
 
-void fini_scene_manager(unique_ptr<SceneManager> &mgr)
+void scene_manager_fini(unique_ptr<SceneManager> &mgr)
 {
     fini_scene(mgr);
 }
 
-void change_scene(unique_ptr<SceneManager> &mgr, eSceneType scene)
+void scene_change(unique_ptr<SceneManager> &mgr, eSceneType scene)
 {
     fini_scene(mgr);
     set_scene(mgr, scene);
