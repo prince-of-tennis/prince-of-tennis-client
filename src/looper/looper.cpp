@@ -2,10 +2,10 @@
 
 #include "util/log.hpp"
 
-void init_looper(Looper *looper, eSceneType default_scene)
+void looper_init(Looper *looper, eSceneType default_scene)
 {
     looper->scene_manager = make_unique<SceneManager>();
-    init_scene_manager(looper->scene_manager, default_scene);
+    scene_manager_init(looper->scene_manager, default_scene);
 }
 
 void loop(Looper *looper)
@@ -13,11 +13,11 @@ void loop(Looper *looper)
     SDL_bool is_running = SDL_TRUE;
     while (is_running)
     {
-        is_running = update_scene(looper->scene_manager);
+        is_running = scene_update(looper->scene_manager);
     }
 }
 
-void finalize_looper(Looper *looper)
+void looper_fini(Looper *looper)
 {
-    fini_scene_manager(looper->scene_manager);
+    scene_manager_fini(looper->scene_manager);
 }

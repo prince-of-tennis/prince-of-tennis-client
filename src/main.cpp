@@ -5,9 +5,9 @@
 int main(void)
 {
     Looper looper;
-    init_looper(&looper, SCENE_TITLE);
+    looper_init(&looper, SCENE_TITLE);
     loop(&looper);
-    finalize_looper(&looper);
+    looper_fini(&looper);
 
     return 0;
 }

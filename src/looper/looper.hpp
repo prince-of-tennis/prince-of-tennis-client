@@ -14,10 +14,10 @@ struct Looper
 };
 
 /// @brief looperの初期化
-void init_looper(Looper *looper, eSceneType default_scene);
+void looper_init(Looper *looper, eSceneType default_scene);
 
 /// @brief ループ処理
 void loop(Looper *looper);
 
 /// @brief looperの終了処理
-void finalize_looper(Looper *looper);
+void looper_fini(Looper *looper);
