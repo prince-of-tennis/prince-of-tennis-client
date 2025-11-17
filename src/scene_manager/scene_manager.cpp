@@ -38,13 +38,11 @@ SDL_bool scene_update(unique_ptr<SceneManager> &mgr)
     switch (mgr->current_scene)
     {
         case SCENE_TITLE:
-            LOG_DEBUG("SCENE_TITLE");
             scene_change(mgr, SCENE_GAME);
             return SDL_TRUE;
 
         case SCENE_GAME:
-            LOG_DEBUG("SCENE_GAME");
-            return SDL_FALSE;
+            return SDL_TRUE;
 
         default:
             LOG_ERROR("不正なシーンが渡されています");
