@@ -5,11 +5,13 @@
 #include <memory>
 
 #include "scene_manager/scene_manager.hpp"
+#include "window_manager/window_manager.hpp"
 
 using namespace std;
 
 struct Looper
 {
+    unique_ptr<WindowManager> window_manager;
     unique_ptr<SceneManager> scene_manager;
 };
 
