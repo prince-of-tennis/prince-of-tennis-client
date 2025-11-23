@@ -2,22 +2,24 @@
 
 #include "util/log.hpp"
 
-void window_manager_init(unique_ptr<WindowManager> &mgr)
-{
-    mgr->window = SDL_CreateWindow("超次元テニス", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                   1920, 1080, SDL_WINDOW_SHOWN);
+static WindowManager g_window_mgr;
 
-    if (mgr->window == nullptr)
+bool window_manager_init()
+{
+    g_window_mgr.window.reset(SDL_CreateWindow("超次元テニス", SDL_WINDOWPOS_CENTERED,
+                                               SDL_WINDOWPOS_CENTERED, 1920, 1080,
+                                               SDL_WINDOW_SHOWN));
+
+    if (g_window_mgr.window == nullptr)
     {
         LOG_ERROR("ウィンドウの生成に失敗しました: " << SDL_GetError());
+        return false;
     }
-    else
-    {
-        LOG_DEBUG("ウィンドウを生成しました");
-    }
+    LOG_DEBUG("ウィンドウを生成しました");
+    return true;
 }
 
-SDL_bool window_manager_update(unique_ptr<WindowManager> &mgr)
+SDL_bool window_manager_update()
 {
     SDL_Event event;
     while (SDL_PollEvent(&event))
@@ -32,12 +34,11 @@ SDL_bool window_manager_update(unique_ptr<WindowManager> &mgr)
     return SDL_TRUE;
 }
 
-void window_manager_fini(unique_ptr<WindowManager> &mgr)
+void window_manager_fini()
 {
-    if (mgr->window != nullptr)
-    {
-        SDL_DestroyWindow(mgr->window);
-        mgr->window = nullptr;
-        LOG_DEBUG("ウィンドウを破棄しました");
-    }
+}
+
+inline SDL_Window *get_window()
+{
+    return g_window_mgr.window.get();
 }

@@ -1,8 +1,11 @@
 #include "looper.hpp"
 
+#include "core/context.hpp"
 #include "util/log.hpp"
 
-void looper_init(Looper *looper, eSceneType default_scene)
+static Context g_context;
+
+bool looper_init(Looper *looper, eSceneType default_scene)
 {
     // SDL初期化
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -13,12 +16,16 @@ void looper_init(Looper *looper, eSceneType default_scene)
     LOG_DEBUG("SDLを初期化しました");
 
     // WindowManager初期化
-    looper->window_manager = make_unique<WindowManager>();
-    window_manager_init(looper->window_manager);
+    if (!window_manager_init()) return false;
+
+    g_context.window = get_window();
+    SDL_GetWindowSize(g_context.window, &g_context.window_width, &g_context.window_height);
 
     // SceneManager初期化
     looper->scene_manager = make_unique<SceneManager>();
     scene_manager_init(looper->scene_manager, default_scene);
+
+    return true;
 }
 
 void loop(Looper *looper)
@@ -27,7 +34,7 @@ void loop(Looper *looper)
     while (is_running)
     {
         // イベント処理
-        is_running = window_manager_update(looper->window_manager);
+        is_running = window_manager_update();
 
         if (is_running)
         {
@@ -40,7 +47,7 @@ void loop(Looper *looper)
 void looper_fini(Looper *looper)
 {
     scene_manager_fini(looper->scene_manager);
-    window_manager_fini(looper->window_manager);
+    window_manager_fini();
     SDL_Quit();
     LOG_DEBUG("SDLを終了しました");
 }

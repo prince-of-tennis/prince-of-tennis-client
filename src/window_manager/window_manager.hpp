@@ -2,15 +2,19 @@
 
 #include <SDL2/SDL.h>
 
-#include <memory>
+#include "util/sdl_helper.hpp"
 
 using namespace std;
 
 struct WindowManager
 {
-    SDL_Window *window;
+    SdlPtr<SDL_Window> window;
 };
 
-void window_manager_init(unique_ptr<WindowManager> &window_manager);
-SDL_bool window_manager_update(unique_ptr<WindowManager> &window_manager);
-void window_manager_fini(unique_ptr<WindowManager> &window_manager);
+bool window_manager_init();
+SDL_bool window_manager_update();
+void window_manager_fini();
+
+/// @brief SDL_Windowのアドレスを取得する
+/// @return SDL_Window&
+inline SDL_Window *get_window();
