@@ -5,9 +5,10 @@
 int main(void)
 {
     Looper looper;
-    if (looper_init(&looper, SCENE_TITLE))
+    if (!looper_init(&looper, SCENE_TITLE))
     {
         SDL_Quit();
+
         return -1;
     }
 

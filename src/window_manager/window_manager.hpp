@@ -17,4 +17,4 @@ void window_manager_fini();
 
 /// @brief SDL_Windowのアドレスを取得する
 /// @return SDL_Window&
-inline SDL_Window *get_window();
+SDL_Window *get_window();

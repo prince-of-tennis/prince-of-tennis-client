@@ -2,6 +2,7 @@
 
 #include "core/context.hpp"
 #include "util/log.hpp"
+#include "window_manager/window_manager.hpp"
 
 static Context g_context;
 
@@ -11,7 +12,7 @@ bool looper_init(Looper *looper, eSceneType default_scene)
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
         LOG_ERROR("SDLの初期化に失敗しました: " << SDL_GetError());
-        return;
+        return false;
     }
     LOG_DEBUG("SDLを初期化しました");
 

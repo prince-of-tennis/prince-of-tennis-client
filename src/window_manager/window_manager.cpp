@@ -38,7 +38,7 @@ void window_manager_fini()
 {
 }
 
-inline SDL_Window *get_window()
+SDL_Window *get_window()
 {
     return g_window_mgr.window.get();
 }
