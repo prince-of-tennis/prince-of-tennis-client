@@ -18,8 +18,12 @@ bool looper_init(Looper *looper, eSceneType default_scene)
     }
     LOG_DEBUG("SDLを初期化しました");
 
+    // ウィンドウサイズの設定
+    g_context.window_width = 800;
+    g_context.window_height = 600;
+
     // WindowManager初期化
-    if (!window_manager_init()) return false;
+    if (!window_manager_init(&g_context)) return false;
 
     g_context.window = get_window();
     SDL_GetWindowSize(g_context.window, &g_context.window_width, &g_context.window_height);

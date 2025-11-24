@@ -4,11 +4,11 @@
 
 static WindowManager g_window_mgr;
 
-bool window_manager_init()
+bool window_manager_init(Context *context)
 {
-    g_window_mgr.window.reset(SDL_CreateWindow("超次元テニス", SDL_WINDOWPOS_CENTERED,
-                                               SDL_WINDOWPOS_CENTERED, 800, 600,
-                                               SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL));
+    g_window_mgr.window.reset(SDL_CreateWindow(
+        "超次元テニス", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, context->window_width,
+        context->window_height, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL));
 
     if (g_window_mgr.window == nullptr)
     {
