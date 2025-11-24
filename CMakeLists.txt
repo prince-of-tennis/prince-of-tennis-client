@@ -1,7 +1,7 @@
 # 1. 基本設定
 # -----------------
 cmake_minimum_required(VERSION 3.16)
-project(SuperDimensionalTennisClient CXX)
+project(SuperDimensionalTennisClient C CXX)
 
 # C++17規格を必須にする
 set(CMAKE_CXX_STANDARD 17)
@@ -18,6 +18,8 @@ find_package(SDL2 REQUIRED)
 # 3. ソースファイルの定義
 # -----------------
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c")
+# GLAD実装を明示的に追加
+list(APPEND SOURCES "libs/opengl/glad/glad.c")
 
 # 4. 実行ファイルの定義
 # -----------------
@@ -27,6 +29,8 @@ add_executable(client ${SOURCES})
 # -----------------
 target_include_directories(client PRIVATE
     "src"
+    "libs"
+    "libs/opengl"
     ${SDL2_INCLUDE_DIRS} # SDL2のヘッダファイルへのパスを追加
 )
 
@@ -36,6 +40,8 @@ target_link_libraries(client PRIVATE
 
     # --- システムライブラリ ---
     ${SDL2_LIBRARIES} # SDL2::SDL2 の代わりにこの変数を使う
+    assimp
+    dl
 )
 
 # (オプション) アセットフォルダを実行ファイルと同じ場所にコピー

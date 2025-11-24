@@ -1,2 +1,3 @@
 #!/bin/bash
-./build/client
+cd build
+./client

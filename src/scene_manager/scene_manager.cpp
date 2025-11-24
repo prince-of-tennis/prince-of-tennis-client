@@ -23,6 +23,8 @@ static void init_scene(unique_ptr<SceneManager> &mgr)
 
         case SCENE_GAME:
             LOG_DEBUG("SCENE_GAMEを初期化します。");
+
+            game_scene_init(&mgr->game_scene);
             break;
 
         default:
@@ -42,6 +44,8 @@ SDL_bool scene_update(unique_ptr<SceneManager> &mgr)
             return SDL_TRUE;
 
         case SCENE_GAME:
+            game_scene_update(&mgr->game_scene);
+            game_scene_draw(&mgr->game_scene);
             return SDL_TRUE;
 
         default:
