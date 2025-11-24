@@ -22,12 +22,12 @@ struct OpenGLObject
     bool is_active;
 };
 
-/// @brief オブジェクトの作成
-/// @param obj OpenGLObject構造体
+/// @brief オブジェクトの作成（ファクトリ関数）
 /// @param model_file モデルファイルパス
 /// @param texture_file テクスチャファイルパス
-/// @return 成功したか
-bool opengl_object_create(OpenGLObject *obj, const char *model_file, const char *texture_file);
+/// @param success 成功したかを格納するポインタ（オプション）
+/// @return 作成されたOpenGLObject
+OpenGLObject *opengl_object_create(const char *model_file, const char *texture_file);
 
 /// @brief オブジェクトの解放
 void opengl_object_destroy(OpenGLObject *obj);

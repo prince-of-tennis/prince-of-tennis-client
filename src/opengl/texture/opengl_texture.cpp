@@ -11,6 +11,7 @@ using namespace std;
 
 bool opengl_texture_init(OpenGLTexture *texture, const char *texture_file)
 {
+    LOG_DEBUG("テクスチャ読み込み開始: " << texture_file);
     stbi_set_flip_vertically_on_load(true);
 
     unsigned char *data =
@@ -20,6 +21,8 @@ bool opengl_texture_init(OpenGLTexture *texture, const char *texture_file)
         LOG_ERROR("テクスチャの読み込みに失敗しました: " << texture_file);
         return false;
     }
+    LOG_DEBUG("画像読み込み成功: " << texture->width << "x" << texture->height
+                                   << ", channels=" << texture->channels);
 
     glGenTextures(1, &texture->texture);
     glBindTexture(GL_TEXTURE_2D, texture->texture);
@@ -51,6 +54,7 @@ bool opengl_texture_init(OpenGLTexture *texture, const char *texture_file)
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    LOG_DEBUG("テクスチャ初期化完了: ID=" << texture->texture);
     return true;
 }
 

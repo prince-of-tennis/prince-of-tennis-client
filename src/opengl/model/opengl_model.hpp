@@ -6,7 +6,7 @@ using namespace std;
 
 struct OpenGLModel
 {
-    const char *model_file;
+    string model_file;
     unsigned int vao;
     unsigned int vbo;
     unsigned int ebo;

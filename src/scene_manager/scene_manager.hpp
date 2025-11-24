@@ -4,6 +4,7 @@
 
 #include <memory>
 
+#include "scene/game/game_scene.hpp"
 #include "scene_type.hpp"
 
 using namespace std;
@@ -11,6 +12,7 @@ using namespace std;
 struct SceneManager
 {
     eSceneType current_scene;
+    GameScene game_scene;
 };
 
 /// @brief scene_managerの初期化

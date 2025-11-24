@@ -7,8 +7,8 @@ static WindowManager g_window_mgr;
 bool window_manager_init()
 {
     g_window_mgr.window.reset(SDL_CreateWindow("超次元テニス", SDL_WINDOWPOS_CENTERED,
-                                               SDL_WINDOWPOS_CENTERED, 1920, 1080,
-                                               SDL_WINDOW_SHOWN));
+                                               SDL_WINDOWPOS_CENTERED, 800, 600,
+                                               SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL));
 
     if (g_window_mgr.window == nullptr)
     {

@@ -2,13 +2,13 @@
 
 #include <SDL2/SDL.h>
 
-#include "util/sdl_helper.hpp"
+#include "util/helper.hpp"
 
 using namespace std;
 
 struct WindowManager
 {
-    SdlPtr<SDL_Window> window;
+    UniquePtr<SDL_Window> window;
 };
 
 bool window_manager_init();

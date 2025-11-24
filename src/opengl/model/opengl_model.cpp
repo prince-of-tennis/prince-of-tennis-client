@@ -14,18 +14,21 @@ using namespace std;
 
 bool opengl_model_init(OpenGLModel *model, string model_file)
 {
+    LOG_DEBUG("モデル読み込み開始: " << model_file);
     std::vector<float> vertices;
     std::vector<unsigned int> indices;
 
     Assimp::Importer importer;
-    model->model_file = model_file.c_str();
-    const aiScene *scene = importer.ReadFile(
-        model->model_file, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs);
+    model->model_file = model_file;
+    const aiScene *scene =
+        importer.ReadFile(model->model_file.c_str(),
+                          aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
-        LOG_ERROR("Assimp: " << importer.GetErrorString());
+        LOG_ERROR("Assimpモデル読み込み失敗: " << importer.GetErrorString());
         return false;
     }
+    LOG_DEBUG("Assimpモデル読み込み成功: meshes=" << scene->mNumMeshes);
 
     aiMesh *mesh = scene->mMeshes[0];
 
@@ -61,10 +64,13 @@ bool opengl_model_init(OpenGLModel *model, string model_file)
     }
 
     model->index_count = indices.size();
+    LOG_DEBUG("モデルデータ: vertices=" << vertices.size() / 8 << ", indices=" << indices.size());
 
     glGenVertexArrays(1, &model->vao);
     glGenBuffers(1, &model->vbo);
     glGenBuffers(1, &model->ebo);
+    LOG_DEBUG("OpenGL バッファ生成: VAO=" << model->vao << ", VBO=" << model->vbo
+                                          << ", EBO=" << model->ebo);
 
     glBindVertexArray(model->vao);
 
@@ -85,6 +91,7 @@ bool opengl_model_init(OpenGLModel *model, string model_file)
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+    LOG_DEBUG("モデル初期化完了: index_count=" << model->index_count);
     return true;
 }
 

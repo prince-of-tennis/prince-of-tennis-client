@@ -2,25 +2,37 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-bool opengl_object_create(OpenGLObject *obj, const char *model_file, const char *texture_file)
+#include "util/log.hpp"
+
+OpenGLObject *opengl_object_create(const char *model_file, const char *texture_file)
 {
+    LOG_DEBUG("OpenGLObject作成開始: model=" << model_file << ", texture=" << texture_file);
+    OpenGLObject *obj = new OpenGLObject();
+
     if (!opengl_model_init(&obj->model, model_file))
     {
-        return false;
+        LOG_ERROR("モデルの初期化に失敗しました: " << model_file);
+        delete obj;
+        return nullptr;
     }
+    LOG_DEBUG("モデルの初期化に成功しました");
 
     if (!opengl_texture_init(&obj->texture, texture_file))
     {
+        LOG_ERROR("テクスチャの初期化に失敗しました: " << texture_file);
         opengl_model_destroy(&obj->model);
-        return false;
+        delete obj;
+        return nullptr;
     }
+    LOG_DEBUG("テクスチャの初期化に成功しました");
 
     obj->transform.position = glm::vec3(0.0f, 0.0f, 0.0f);
     obj->transform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
     obj->transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
     obj->is_active = true;
 
-    return true;
+    LOG_DEBUG("OpenGLObject作成完了");
+    return obj;
 }
 
 void opengl_object_destroy(OpenGLObject *obj)
@@ -67,6 +79,7 @@ void opengl_object_draw(OpenGLObject *obj)
 {
     if (!obj->is_active)
     {
+        LOG_DEBUG("オブジェクトが非アクティブのため描画をスキップ");
         return;
     }
 

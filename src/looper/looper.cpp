@@ -1,10 +1,12 @@
 #include "looper.hpp"
 
 #include "core/context.hpp"
+#include "opengl/opengl.hpp"
 #include "util/log.hpp"
 #include "window_manager/window_manager.hpp"
 
 static Context g_context;
+static OpenGL g_opengl;
 
 bool looper_init(Looper *looper, eSceneType default_scene)
 {
@@ -21,6 +23,14 @@ bool looper_init(Looper *looper, eSceneType default_scene)
 
     g_context.window = get_window();
     SDL_GetWindowSize(g_context.window, &g_context.window_width, &g_context.window_height);
+
+    // OpenGL初期化
+    if (!opengl_init(&g_opengl, &g_context))
+    {
+        LOG_ERROR("OpenGLの初期化に失敗しました");
+        return false;
+    }
+    LOG_DEBUG("OpenGLを初期化しました");
 
     // SceneManager初期化
     looper->scene_manager = make_unique<SceneManager>();
@@ -41,6 +51,9 @@ void loop(Looper *looper)
         {
             // シーン更新
             is_running = scene_update(looper->scene_manager);
+
+            // バッファスワップ
+            SDL_GL_SwapWindow(g_context.window);
         }
     }
 }

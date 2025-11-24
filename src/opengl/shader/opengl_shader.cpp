@@ -12,6 +12,7 @@
 
 bool opengl_shader_init(OpenGLShader *shader, const char *vertex_file, const char *fragment_file)
 {
+    LOG_DEBUG("シェーダー初期化開始: vertex=" << vertex_file << ", fragment=" << fragment_file);
     std::string vertex_shader_source;
     std::string fragment_shader_source;
 
@@ -119,6 +120,7 @@ bool opengl_shader_init(OpenGLShader *shader, const char *vertex_file, const cha
         return false;
     }
 
+    LOG_DEBUG("シェーダー初期化完了: program=" << shader->program);
     return true;
 }
 
