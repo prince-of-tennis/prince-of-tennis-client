@@ -24,6 +24,7 @@ static void init_scene(unique_ptr<SceneManager> &mgr)
         case SCENE_GAME:
             LOG_DEBUG("SCENE_GAMEを初期化します。");
 
+            mgr->game_scene.context = mgr->context;
             game_scene_init(&mgr->game_scene);
             break;
 

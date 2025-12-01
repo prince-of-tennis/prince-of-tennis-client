@@ -1,16 +1,17 @@
 #pragma once
 
 #include <string>
+#include <vector>
+
+#include "glad/glad.h"
+#include "opengl/mesh/opengl_mesh.hpp"
 
 using namespace std;
 
 struct OpenGLModel
 {
     string model_file;
-    unsigned int vao;
-    unsigned int vbo;
-    unsigned int ebo;
-    unsigned int index_count;
+    vector<OpenGLMesh> meshes;
 };
 
 bool opengl_model_init(OpenGLModel *model, string model_file);

@@ -4,6 +4,7 @@
 
 #include <memory>
 
+#include "core/context.hpp"
 #include "scene/game/game_scene.hpp"
 #include "scene_type.hpp"
 
@@ -12,6 +13,7 @@ using namespace std;
 struct SceneManager
 {
     eSceneType current_scene;
+    Context *context;
     GameScene game_scene;
 };
 

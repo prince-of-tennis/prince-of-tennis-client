@@ -20,7 +20,7 @@ bool game_scene_init(GameScene *scene)
     LOG_DEBUG("シェーダー初期化完了");
 
     // オブジェクト作成
-    scene->obj.reset(opengl_object_create("obj/object.obj", "img/container.jpeg"));
+    scene->obj.reset(opengl_object_create("obj/tennis_court.obj", "img/container.jpeg"));
     if (scene->obj == nullptr)
     {
         LOG_ERROR("オブジェクトの作成に失敗しました");
@@ -31,9 +31,10 @@ bool game_scene_init(GameScene *scene)
     opengl_object_set_position(scene->obj.get(), glm::vec3(0.0f, 0.0f, -5.0f));
 
     // カメラ初期化
-    opengl_camera_init(&scene->camera, 800.0f / 600.0f);
-    opengl_camera_set_position(&scene->camera, glm::vec3(0.0f, 2.0f, 10.0f));
-    opengl_camera_set_target(&scene->camera, glm::vec3(0.0f, 0.0f, 0.0f));
+    opengl_camera_init(&scene->camera,
+                       scene->context->window_width / scene->context->window_height);
+    opengl_camera_set_position(&scene->camera, scene->context->camera_position);
+    opengl_camera_set_target(&scene->camera, scene->context->camera_target);
 
     // ライト初期化
     opengl_light_init(&scene->light);
@@ -47,15 +48,6 @@ bool game_scene_init(GameScene *scene)
 
 bool game_scene_update(GameScene *scene)
 {
-    // オブジェクトを回転させる
-    static float rotation_angle = 0.0f;
-    rotation_angle += 1.0f;  // 毎フレーム1度回転
-
-    if (scene->obj)
-    {
-        opengl_object_set_rotation(scene->obj.get(), glm::vec3(0.0f, rotation_angle, 0.0f));
-    }
-
     // カメラ更新
     opengl_camera_update(&scene->camera);
 
@@ -68,12 +60,13 @@ bool game_scene_update(GameScene *scene)
 void game_scene_draw(GameScene *scene)
 {
     // 画面クリア
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(scene->context->background_r, scene->context->background_g,
+                 scene->context->background_b, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (scene->obj)
     {
-        opengl_camera_draw(&scene->camera, &scene->shader, &scene->light, scene->obj.get());
+        opengl_object_with_camera(&scene->camera, &scene->shader, &scene->light, scene->obj.get());
     }
     else
     {

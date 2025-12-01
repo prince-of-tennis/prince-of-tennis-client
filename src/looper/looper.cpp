@@ -8,6 +8,17 @@
 static Context g_context;
 static OpenGL g_opengl;
 
+void context_init()
+{
+    g_context.window_width = 860;
+    g_context.window_height = 640;
+    g_context.camera_position = glm::vec3(0.0f, 30.0f, 90.0f);
+    g_context.camera_target = glm::vec3(0.0f, 0.0f, 0.0f);
+    g_context.background_r = 0.2f;
+    g_context.background_g = 0.3f;
+    g_context.background_b = 0.3f;
+}
+
 bool looper_init(Looper *looper, eSceneType default_scene)
 {
     // SDL初期化
@@ -18,15 +29,12 @@ bool looper_init(Looper *looper, eSceneType default_scene)
     }
     LOG_DEBUG("SDLを初期化しました");
 
-    // ウィンドウサイズの設定
-    g_context.window_width = 800;
-    g_context.window_height = 600;
+    context_init();
 
     // WindowManager初期化
     if (!window_manager_init(&g_context)) return false;
 
     g_context.window = get_window();
-    SDL_GetWindowSize(g_context.window, &g_context.window_width, &g_context.window_height);
 
     // OpenGL初期化
     if (!opengl_init(&g_opengl, &g_context))
@@ -38,6 +46,7 @@ bool looper_init(Looper *looper, eSceneType default_scene)
 
     // SceneManager初期化
     looper->scene_manager = make_unique<SceneManager>();
+    looper->scene_manager->context = &g_context;
     scene_manager_init(looper->scene_manager, default_scene);
 
     return true;
