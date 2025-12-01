@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/context.hpp"
 #include "opengl/camera/opengl_camera.hpp"
 #include "opengl/light/opengl_light.hpp"
 #include "opengl/object/opengl_object.hpp"
@@ -12,6 +13,7 @@ struct GameScene
     OpenGLShader shader;
     OpenGLCamera camera;
     OpenGLLight light;
+    Context *context;
 };
 
 bool game_scene_init(GameScene *scene);

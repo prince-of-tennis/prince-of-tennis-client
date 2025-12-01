@@ -27,5 +27,5 @@ void opengl_camera_set_fov(OpenGLCamera *camera, float fov);
 glm::mat4 opengl_camera_get_view_matrix(OpenGLCamera *camera);
 glm::mat4 opengl_camera_get_projection_matrix(OpenGLCamera *camera);
 
-void opengl_camera_draw(OpenGLCamera *camera, OpenGLShader *shader, OpenGLLight *light,
-                        OpenGLObject *object);
+void opengl_object_with_camera(OpenGLCamera *camera, OpenGLShader *shader, OpenGLLight *light,
+                               OpenGLObject *object);
