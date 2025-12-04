@@ -5,6 +5,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "glad/glad.h"
+#include "network/network.hpp"
 #include "util/log.hpp"
 
 bool game_scene_init(GameScene *scene)
@@ -17,7 +18,7 @@ bool game_scene_init(GameScene *scene)
         LOG_ERROR("シェーダーの初期化に失敗しました");
         return false;
     }
-    LOG_DEBUG("シェーダー初期化完了");
+    LOG_SUCCESS("シェーダー初期化完了");
 
     // オブジェクト作成
     scene->obj.reset(opengl_object_create("obj/tennis_court.obj", "img/container.jpeg"));
@@ -42,7 +43,14 @@ bool game_scene_init(GameScene *scene)
     // 深度テスト有効化
     glEnable(GL_DEPTH_TEST);
 
-    LOG_DEBUG("GameScene初期化完了");
+    // Network
+    scene->network.reset(new Network);
+    if (!network_init(scene->network.get(), scene->context))
+    {
+        return false;
+    }
+
+    LOG_SUCCESS("GameScene初期化完了");
     return true;
 }
 
@@ -53,6 +61,11 @@ bool game_scene_update(GameScene *scene)
 
     // ライト更新
     opengl_light_update(&scene->light);
+
+    if (!network_listen_to_server(scene->network.get()))
+    {
+        return false;
+    }
 
     return true;
 }
