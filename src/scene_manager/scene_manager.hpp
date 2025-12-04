@@ -19,7 +19,7 @@ struct SceneManager
 
 /// @brief scene_managerの初期化
 /// @param default_scene デフォルトのシーン
-void scene_manager_init(unique_ptr<SceneManager> &mgr, eSceneType default_scene);
+bool scene_manager_init(unique_ptr<SceneManager> &mgr, eSceneType default_scene);
 
 /// @brief scene_managerの終了処理
 /// @param mgr SceneManager
@@ -31,4 +31,4 @@ SDL_bool scene_update(unique_ptr<SceneManager> &mgr);
 
 /// @brief シーンを変更
 /// @param scene シーン
-void scene_change(unique_ptr<SceneManager> &mgr, eSceneType scene);
+bool scene_change(unique_ptr<SceneManager> &mgr, eSceneType scene);

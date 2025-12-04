@@ -17,6 +17,9 @@ void context_init()
     g_context.background_r = 0.2f;
     g_context.background_g = 0.3f;
     g_context.background_b = 0.3f;
+
+    g_context.network_host = "localhost";
+    g_context.network_port = 5000;
 }
 
 bool looper_init(Looper *looper, eSceneType default_scene)
@@ -47,7 +50,11 @@ bool looper_init(Looper *looper, eSceneType default_scene)
     // SceneManager初期化
     looper->scene_manager = make_unique<SceneManager>();
     looper->scene_manager->context = &g_context;
-    scene_manager_init(looper->scene_manager, default_scene);
+    if (!scene_manager_init(looper->scene_manager, default_scene))
+    {
+        LOG_ERROR("シーンの初期化に失敗しました");
+        return false;
+    }
 
     return true;
 }

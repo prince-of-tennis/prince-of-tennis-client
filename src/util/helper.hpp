@@ -4,6 +4,7 @@
 
 #include <memory>
 
+#include "network/network.hpp"
 #include "opengl/object/opengl_object.hpp"
 
 /// @brief SDLの構造体の除去用のヘルパー
@@ -58,6 +59,17 @@ struct Deleter<OpenGLObject>
     void operator()(OpenGLObject *o) const
     {
         opengl_object_destroy(o);
+        delete o;
+    }
+};
+
+template <>
+struct Deleter<Network>
+{
+    void operator()(Network *network) const
+    {
+        network_fini(network);
+        delete network;
     }
 };
 

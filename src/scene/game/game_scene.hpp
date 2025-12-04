@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/context.hpp"
+#include "network/network.hpp"
 #include "opengl/camera/opengl_camera.hpp"
 #include "opengl/light/opengl_light.hpp"
 #include "opengl/object/opengl_object.hpp"
@@ -14,6 +15,8 @@ struct GameScene
     OpenGLCamera camera;
     OpenGLLight light;
     Context *context;
+
+    UniquePtr<Network> network;
 };
 
 bool game_scene_init(GameScene *scene);

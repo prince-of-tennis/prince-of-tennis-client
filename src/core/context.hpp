@@ -3,6 +3,9 @@
 #include <SDL2/SDL.h>
 
 #include <glm/glm.hpp>
+#include <string>
+
+using namespace std;
 
 struct Context
 {
@@ -14,4 +17,8 @@ struct Context
     float background_r;
     float background_g;
     float background_b;
+
+    // Network関連
+    string network_host;
+    Uint16 network_port;
 };

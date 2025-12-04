@@ -2,16 +2,16 @@
 
 #include "util/log.hpp"
 
-static void init_scene(unique_ptr<SceneManager> &mgr);
+static bool init_scene(unique_ptr<SceneManager> &mgr);
 static void fini_scene(unique_ptr<SceneManager> &mgr);
-static void set_scene(unique_ptr<SceneManager> &mgr, eSceneType scene);
+static bool set_scene(unique_ptr<SceneManager> &mgr, eSceneType scene);
 
-void scene_manager_init(unique_ptr<SceneManager> &mgr, eSceneType default_scene)
+bool scene_manager_init(unique_ptr<SceneManager> &mgr, eSceneType default_scene)
 {
-    set_scene(mgr, default_scene);
+    return set_scene(mgr, default_scene);
 }
 
-static void init_scene(unique_ptr<SceneManager> &mgr)
+static bool init_scene(unique_ptr<SceneManager> &mgr)
 {
     // MARK: 初期化
     // ここにそれぞれのシーンの初期化処理を記述する
@@ -25,13 +25,14 @@ static void init_scene(unique_ptr<SceneManager> &mgr)
             LOG_DEBUG("SCENE_GAMEを初期化します。");
 
             mgr->game_scene.context = mgr->context;
-            game_scene_init(&mgr->game_scene);
-            break;
+            return game_scene_init(&mgr->game_scene);
 
         default:
             LOG_ERROR("不正なシーンが渡されました。");
             break;
     }
+
+    return true;
 }
 
 SDL_bool scene_update(unique_ptr<SceneManager> &mgr)
@@ -41,11 +42,17 @@ SDL_bool scene_update(unique_ptr<SceneManager> &mgr)
     switch (mgr->current_scene)
     {
         case SCENE_TITLE:
-            scene_change(mgr, SCENE_GAME);
+            if (!scene_change(mgr, SCENE_GAME))
+            {
+                return SDL_FALSE;
+            }
             return SDL_TRUE;
 
         case SCENE_GAME:
-            game_scene_update(&mgr->game_scene);
+            if (!game_scene_update(&mgr->game_scene))
+            {
+                return SDL_FALSE;
+            }
             game_scene_draw(&mgr->game_scene);
             return SDL_TRUE;
 
@@ -79,16 +86,16 @@ void scene_manager_fini(unique_ptr<SceneManager> &mgr)
     fini_scene(mgr);
 }
 
-void scene_change(unique_ptr<SceneManager> &mgr, eSceneType scene)
+bool scene_change(unique_ptr<SceneManager> &mgr, eSceneType scene)
 {
     fini_scene(mgr);
-    set_scene(mgr, scene);
+    return set_scene(mgr, scene);
 }
 
 /// @brief シーンを設定する
 /// @param scene シーン
-static void set_scene(unique_ptr<SceneManager> &mgr, eSceneType scene)
+static bool set_scene(unique_ptr<SceneManager> &mgr, eSceneType scene)
 {
     mgr->current_scene = scene;
-    init_scene(mgr);
+    return init_scene(mgr);
 }
