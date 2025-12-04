@@ -54,7 +54,7 @@ bool network_listen_to_server(Network *network)
 
         if (len > 0)
         {
-            LOG_SUCCESS("通信完了");
+            // 通信完了
         }
         else
         {

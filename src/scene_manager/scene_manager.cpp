@@ -19,7 +19,7 @@ static bool init_scene(unique_ptr<SceneManager> &mgr)
     {
         case SCENE_TITLE:
             LOG_DEBUG("SCENE_TITLEを初期化します。");
-            break;
+            return true;
 
         case SCENE_GAME:
             LOG_DEBUG("SCENE_GAMEを初期化します。");
@@ -29,7 +29,7 @@ static bool init_scene(unique_ptr<SceneManager> &mgr)
 
         default:
             LOG_ERROR("不正なシーンが渡されました。");
-            break;
+            return false;
     }
 
     return true;
