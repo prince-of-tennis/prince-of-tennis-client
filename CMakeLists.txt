@@ -18,12 +18,17 @@ find_package(SDL2 REQUIRED)
 # 3. ソースファイルの定義
 # -----------------
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c")
+
 # GLAD実装を明示的に追加
 list(APPEND SOURCES "libs/opengl/glad/glad.c")
 
 # 4. 実行ファイルの定義
 # -----------------
 add_executable(client ${SOURCES})
+
+# SDL_netの読み込み
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SDL2_NET REQUIRED SDL2_net)
 
 # 5. インクルードパスの指定 (★修正箇所)
 # -----------------
@@ -32,6 +37,7 @@ target_include_directories(client PRIVATE
     "libs"
     "libs/opengl"
     ${SDL2_INCLUDE_DIRS} # SDL2のヘッダファイルへのパスを追加
+    ${SDL2_NET_INCLUDE_DIRS}
 )
 
 # 6. ライブラリのリンク (★修正箇所)
@@ -40,6 +46,7 @@ target_link_libraries(client PRIVATE
 
     # --- システムライブラリ ---
     ${SDL2_LIBRARIES} # SDL2::SDL2 の代わりにこの変数を使う
+    ${SDL2_NET_LIBRARIES} # SDL2_net
     assimp
     dl
 )
