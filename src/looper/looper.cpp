@@ -30,7 +30,7 @@ bool looper_init(Looper *looper, eSceneType default_scene)
         LOG_ERROR("SDLの初期化に失敗しました: " << SDL_GetError());
         return false;
     }
-    LOG_DEBUG("SDLを初期化しました");
+    LOG_SUCCESS("SDLを初期化しました");
 
     context_init();
 
@@ -45,7 +45,7 @@ bool looper_init(Looper *looper, eSceneType default_scene)
         LOG_ERROR("OpenGLの初期化に失敗しました");
         return false;
     }
-    LOG_DEBUG("OpenGLを初期化しました");
+    LOG_SUCCESS("OpenGLを初期化しました");
 
     // SceneManager初期化
     looper->scene_manager = make_unique<SceneManager>();
@@ -83,5 +83,5 @@ void looper_fini(Looper *looper)
     scene_manager_fini(looper->scene_manager);
     window_manager_fini();
     SDL_Quit();
-    LOG_DEBUG("SDLを終了しました");
+    LOG_SUCCESS("SDLを終了しました");
 }

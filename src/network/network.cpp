@@ -7,7 +7,7 @@ bool network_init(Network *network, Context *context)
 {
     if (SDLNet_Init() == -1)
     {
-        LOG_DEBUG("SDLNetの初期化に失敗しました: " << SDLNet_GetError());
+        LOG_ERROR("SDLNetの初期化に失敗しました: " << SDLNet_GetError());
         return false;
     }
 
@@ -18,7 +18,7 @@ bool network_init(Network *network, Context *context)
         return false;
     }
 
-    LOG_DEBUG("名前解決完了");
+    LOG_SUCCESS("名前解決完了");
 
     network->socket = SDLNet_TCP_Open(&network->ip_address);
     if (!network->socket)
@@ -27,13 +27,13 @@ bool network_init(Network *network, Context *context)
         return false;
     }
 
-    LOG_DEBUG("サーバに接続完了");
+    LOG_SUCCESS("サーバに接続完了");
 
     // 監視対象に追加
     network->socket_set = SDLNet_AllocSocketSet(1);
     SDLNet_TCP_AddSocket(network->socket_set, network->socket);
 
-    LOG_DEBUG("ソケット通信の初期化完了");
+    LOG_SUCCESS("ソケット通信の初期化完了");
 
     return true;
 }
@@ -54,7 +54,7 @@ bool network_listen_to_server(Network *network)
 
         if (len > 0)
         {
-            LOG_DEBUG("通信完了");
+            LOG_SUCCESS("通信完了");
         }
         else
         {

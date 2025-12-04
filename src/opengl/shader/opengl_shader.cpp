@@ -120,7 +120,7 @@ bool opengl_shader_init(OpenGLShader *shader, const char *vertex_file, const cha
         return false;
     }
 
-    LOG_DEBUG("シェーダー初期化完了: program=" << shader->program);
+    LOG_SUCCESS("シェーダー初期化完了: program=" << shader->program);
     return true;
 }
 

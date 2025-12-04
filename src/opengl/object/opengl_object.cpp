@@ -15,7 +15,7 @@ OpenGLObject *opengl_object_create(const char *model_file, const char *texture_f
         delete obj;
         return nullptr;
     }
-    LOG_DEBUG("モデルの初期化に成功しました");
+    LOG_SUCCESS("モデルの初期化に成功しました");
 
     if (!opengl_texture_init(&obj->texture, texture_file))
     {
@@ -24,14 +24,14 @@ OpenGLObject *opengl_object_create(const char *model_file, const char *texture_f
         delete obj;
         return nullptr;
     }
-    LOG_DEBUG("テクスチャの初期化に成功しました");
+    LOG_SUCCESS("テクスチャの初期化に成功しました");
 
     obj->transform.position = glm::vec3(0.0f, 0.0f, 0.0f);
     obj->transform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
     obj->transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
     obj->is_active = true;
 
-    LOG_DEBUG("OpenGLObject作成完了");
+    LOG_SUCCESS("OpenGLObject作成完了");
     return obj;
 }
 

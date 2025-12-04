@@ -20,6 +20,10 @@
 // ログを出力する
 // (CMakeで -DDEBUG=1 を指定した時だけ有効になる)
 #define LOG_DEBUG(message) std::cout << "[-] " << message << ANSI_RESET << std::endl
+
+#define LOG_SUCCESS(message) std::cout << ANSI_GREEN << "[o] " << message << ANSI_RESET << std::endl
+
 #else
 #define LOG_DEBUG(message)
+
 #endif

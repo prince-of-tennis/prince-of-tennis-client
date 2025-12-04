@@ -18,7 +18,7 @@ bool game_scene_init(GameScene *scene)
         LOG_ERROR("シェーダーの初期化に失敗しました");
         return false;
     }
-    LOG_DEBUG("シェーダー初期化完了");
+    LOG_SUCCESS("シェーダー初期化完了");
 
     // オブジェクト作成
     scene->obj.reset(opengl_object_create("obj/tennis_court.obj", "img/container.jpeg"));
@@ -50,7 +50,7 @@ bool game_scene_init(GameScene *scene)
         return false;
     }
 
-    LOG_DEBUG("GameScene初期化完了");
+    LOG_SUCCESS("GameScene初期化完了");
     return true;
 }
 

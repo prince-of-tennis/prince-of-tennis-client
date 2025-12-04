@@ -26,7 +26,7 @@ bool opengl_model_init(OpenGLModel *model, string model_file)
         LOG_ERROR("Assimpモデル読み込み失敗: " << importer.GetErrorString());
         return false;
     }
-    LOG_DEBUG("Assimpモデル読み込み成功: meshes=" << scene->mNumMeshes);
+    LOG_SUCCESS("Assimpモデル読み込み成功: meshes=" << scene->mNumMeshes);
 
     for (int i = 0; i < scene->mNumMeshes; i++)
     {
@@ -104,7 +104,7 @@ bool opengl_model_init(OpenGLModel *model, string model_file)
 
     for (auto mesh : model->meshes)
     {
-        LOG_DEBUG("モデル初期化完了: index_count=" << mesh.index_count);
+        LOG_SUCCESS("モデル初期化完了: index_count=" << mesh.index_count);
     }
     return true;
 }
