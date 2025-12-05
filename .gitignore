@@ -55,3 +55,11 @@ dkms.conf
 *.dwo
 
 build/
+
+# CLion
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+._*
