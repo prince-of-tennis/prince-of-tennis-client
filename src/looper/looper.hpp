@@ -8,12 +8,15 @@
 #include "scene_manager/scene_manager.hpp"
 #include "window_manager/window_manager.hpp"
 
+#include "joycon/joycon.hpp"
+
 using namespace std;
 
 struct Looper
 {
     unique_ptr<SceneManager> scene_manager;
     Context *context;
+    Joycon joycon;
 };
 
 /// @brief looperの初期化
