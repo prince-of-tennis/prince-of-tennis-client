@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+// #define DEBUG
+
 #define ANSI_RESET "\033[0m"    // リセット (必須)
 #define ANSI_RED "\033[31m"     // 赤
 #define ANSI_GREEN "\033[32m"   // 緑

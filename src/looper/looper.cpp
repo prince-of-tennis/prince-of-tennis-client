@@ -1,6 +1,8 @@
 #include "looper.hpp"
 
+#include "common/player_input.h"
 #include "core/context.hpp"
+#include "joycon/joycon.hpp"
 #include "opengl/opengl.hpp"
 #include "util/log.hpp"
 #include "window_manager/window_manager.hpp"
@@ -56,6 +58,8 @@ bool looper_init(Looper *looper, eSceneType default_scene)
         return false;
     }
 
+    if (!joycon_init(&looper->joycon)) return false;
+
     return true;
 }
 
@@ -75,6 +79,28 @@ void loop(Looper *looper)
             // バッファスワップ
             SDL_GL_SwapWindow(g_context.window);
         }
+
+        PlayerInput player_input = get_joycon(&looper->joycon);
+        if (player_input.right)
+        {
+            LOG_DEBUG("右");
+        }
+        if (player_input.left)
+        {
+            LOG_DEBUG("左");
+        }
+        if (player_input.front)
+        {
+            LOG_DEBUG("後");
+        }
+        if (player_input.back)
+        {
+            LOG_DEBUG("前");
+        }
+        if (player_input.swing)
+        {
+            LOG_DEBUG("振る");
+        }
     }
 }
 
@@ -82,6 +108,7 @@ void looper_fini(Looper *looper)
 {
     scene_manager_fini(looper->scene_manager);
     window_manager_fini();
+    joycon_fini(&looper->joycon);
     SDL_Quit();
     LOG_SUCCESS("SDLを終了しました");
 }

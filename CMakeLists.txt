@@ -49,6 +49,9 @@ target_link_libraries(client PRIVATE
     ${SDL2_NET_LIBRARIES} # SDL2_net
     assimp
     dl
+    joyconlib
+    hidapi-hidraw
+    m
 )
 
 # (オプション) アセットフォルダを実行ファイルと同じ場所にコピー
