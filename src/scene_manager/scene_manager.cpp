@@ -31,8 +31,6 @@ static bool init_scene(unique_ptr<SceneManager> &mgr)
             LOG_ERROR("不正なシーンが渡されました。");
             return false;
     }
-
-    return true;
 }
 
 SDL_bool scene_update(unique_ptr<SceneManager> &mgr)

@@ -1,6 +1,6 @@
 #include "network/network.hpp"
 
-#include "common/Gamestatus.h"
+#include "common/packet.h"
 #include "util/log.hpp"
 
 bool network_init(Network *network, Context *context)
@@ -49,18 +49,47 @@ bool network_listen_to_server(Network *network)
 
     if (num_ready_socket > 0)
     {
-        Gamestatus status;
-        int len = SDLNet_TCP_Recv(network->socket, &status, sizeof(Gamestatus));
-
-        if (len > 0)
+        Packet packet;
+        if (SDLNet_TCP_Recv(network->socket, &packet, sizeof(Packet)) >= sizeof(Packet))
         {
-            // 通信完了
+            // パケットを処理
+            network_handle_packet(network, packet);
         }
         else
         {
-            LOG_ERROR("サーバーとの接続が切れました");
+            LOG_ERROR("サーバーとの通信に失敗しました: " << SDLNet_GetError());
             return false;
         }
+    }
+
+    return true;
+}
+
+bool network_handle_packet(Network *network, Packet packet)
+{
+    switch (packet.type)
+    {
+        case PACKET_TYPE_GAME_PHASE:
+            GamePhase game_phase;
+            memcpy(&game_phase, packet.data, sizeof(GamePhase));
+            LOG_DEBUG("GamePhase: " << game_phase);
+            network->network_data_set.game_phase = game_phase;
+            break;
+
+        default:
+            LOG_ERROR("不正な値が送信されました: " << packet.type);
+            return false;
+    }
+
+    return true;
+}
+
+bool network_send_to_server(Network *network, Packet packet)
+{
+    if (SDLNet_TCP_Send(network->socket, &packet, sizeof(Packet)) < sizeof(Packet))
+    {
+        LOG_ERROR("サーバーへの送信に失敗しました: " << SDLNet_GetError());
+        return false;
     }
 
     return true;
