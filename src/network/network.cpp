@@ -80,8 +80,21 @@ bool network_handle_packet(Network *network, Packet packet)
 
         default:
             LOG_ERROR("不正な値が送信されました: " << packet.type);
-            break;
+            return false;
     }
+
+    return true;
+}
+
+bool network_send_to_server(Network *network, Packet packet)
+{
+    if (SDLNet_TCP_Send(network->socket, &packet, sizeof(Packet)) < sizeof(Packet))
+    {
+        LOG_ERROR("サーバーへの送信に失敗しました: " << SDLNet_GetError());
+        return false;
+    }
+
+    return true;
 }
 
 void network_fini(Network *network)

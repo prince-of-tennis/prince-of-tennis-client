@@ -23,6 +23,12 @@ bool network_init(Network *network, Context *context);
 /// @brief サーバにListen(毎フレーム実行)
 bool network_listen_to_server(Network *network);
 
+/// @brief サーバにパケットを送信
+/// @param network 構造体
+/// @param packet 送信するパケット
+/// @return 成功したか
+bool network_send_to_server(Network *network, Packet packet);
+
 /// @brief 受信したパケットの処理
 /// @param network 構造体
 /// @param packet 受信したパケット
