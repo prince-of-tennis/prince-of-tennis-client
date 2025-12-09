@@ -1,6 +1,6 @@
 #include "network/network.hpp"
 
-#include "common/Gamestatus.h"
+#include "common/packet.h"
 #include "util/log.hpp"
 
 bool network_init(Network *network, Context *context)
@@ -49,12 +49,13 @@ bool network_listen_to_server(Network *network)
 
     if (num_ready_socket > 0)
     {
-        Gamestatus status;
-        int len = SDLNet_TCP_Recv(network->socket, &status, sizeof(Gamestatus));
+        Packet packet;
+        int len = SDLNet_TCP_Recv(network->socket, &packet, sizeof(Packet));
 
         if (len > 0)
         {
-            // 通信完了
+            // パケットを処理
+            network_handle_packet(network, packet);
         }
         else
         {
@@ -64,6 +65,23 @@ bool network_listen_to_server(Network *network)
     }
 
     return true;
+}
+
+bool network_handle_packet(Network *network, Packet packet)
+{
+    switch (packet.type)
+    {
+        case PACKET_TYPE_GAME_PHASE:
+            GamePhase game_phase;
+            memcpy(packet.data, &game_phase, sizeof(GamePhase));
+            LOG_DEBUG("GamePhase: " << game_phase);
+            network->network_data_set.game_phase = game_phase;
+            break;
+
+        default:
+            LOG_ERROR("不正な値が送信されました: " << packet.type);
+            break;
+    }
 }
 
 void network_fini(Network *network)
