@@ -71,7 +71,7 @@ bool network_handle_packet(Network *network, Packet packet)
     {
         case PACKET_TYPE_GAME_PHASE:
             GamePhase game_phase;
-            memcpy(packet.data, &game_phase, sizeof(GamePhase));
+            memcpy(&game_phase, packet.data, sizeof(GamePhase));
             LOG_DEBUG("GamePhase: " << game_phase);
             network->network_data_set.game_phase = game_phase;
             break;
