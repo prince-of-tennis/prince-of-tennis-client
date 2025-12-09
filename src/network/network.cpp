@@ -50,16 +50,14 @@ bool network_listen_to_server(Network *network)
     if (num_ready_socket > 0)
     {
         Packet packet;
-        int len = SDLNet_TCP_Recv(network->socket, &packet, sizeof(Packet));
-
-        if (len > 0)
+        if (SDLNet_TCP_Recv(network->socket, &packet, sizeof(Packet)) >= sizeof(Packet))
         {
             // パケットを処理
             network_handle_packet(network, packet);
         }
         else
         {
-            LOG_ERROR("サーバーとの接続が切れました");
+            LOG_ERROR("サーバーとの通信に失敗しました: " << SDLNet_GetError());
             return false;
         }
     }
