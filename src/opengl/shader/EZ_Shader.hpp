@@ -4,13 +4,15 @@
 
 struct _EZ_Shader
 {
-    unsigned int program;
-    unsigned int model_loc;
-    unsigned int view_loc;
-    unsigned int proj_loc;
-    unsigned int light_loc;
-    unsigned int light_color_loc;
-    unsigned int view_pos_loc;
+    unsigned int program;          // シェーダープログラムID
+    unsigned int model_loc;        // モデル行列のロケーション
+    unsigned int view_loc;         // ビュー行列のロケーション
+    unsigned int proj_loc;         // 投影行列のロケーション
+    unsigned int light_loc;        // ライト位置のロケーション
+    unsigned int light_color_loc;  // ライト色のロケーション
+    unsigned int view_pos_loc;     // カメラ位置のロケーション
+
+    ~_EZ_Shader();
 };
 
 typedef std::shared_ptr<_EZ_Shader> EZ_Shader;

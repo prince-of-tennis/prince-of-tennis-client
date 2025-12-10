@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "network/network.hpp"
-#include "opengl/object/opengl_object.hpp"
+#include "opengl/object/EZ_Object.hpp"
 
 /// @brief SDLの構造体の除去用のヘルパー
 /// @tparam T 型
@@ -54,11 +54,11 @@ struct Deleter<SDL_Texture>
 
 /// @brief OpenGLObjectの除去
 template <>
-struct Deleter<OpenGLObject>
+struct Deleter<_EZ_Object>
 {
-    void operator()(OpenGLObject *o) const
+    void operator()(_EZ_Object *o) const
     {
-        opengl_object_destroy(o);
+        _EZ_DestroyObject(o);
         delete o;
     }
 };

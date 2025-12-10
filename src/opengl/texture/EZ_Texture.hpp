@@ -4,10 +4,10 @@
 
 struct _EZ_Texture
 {
-    unsigned int texture;
-    int width;
-    int height;
-    int channels;
+    unsigned int texture;  // OpenGLテクスチャID
+    int width;             // テクスチャの幅
+    int height;            // テクスチャの高さ
+    int channels;          // テクスチャのチャンネル数
 
     ~_EZ_Texture();
 };

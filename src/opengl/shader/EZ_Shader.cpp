@@ -8,6 +8,7 @@
 #include <string>
 
 #include "opengl/glad/glad.h"
+#include "opengl/texture/EZ_Texture.hpp"
 #include "util/log.hpp"
 
 EZ_Shader EZ_CreateShader(const char *vertex_file_path, const char *fragment_file_path)
@@ -250,4 +251,9 @@ void _EZ_DestroyShader(_EZ_Shader *shader)
 void _EZ_UseShader(_EZ_Shader *shader)
 {
     glUseProgram(shader->program);
+}
+
+_EZ_Shader::~_EZ_Shader()
+{
+    _EZ_DestroyShader(this);
 }

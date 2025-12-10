@@ -10,8 +10,8 @@ using namespace std;
 
 struct _EZ_Model
 {
-    string model_file_path;
-    vector<EZ_Mesh> meshes;
+    string model_file_path;  // モデルファイルパス
+    vector<EZ_Mesh> meshes;  // メッシュのリスト
 
     ~_EZ_Model();
 };

@@ -3,8 +3,8 @@
 
 struct EZ_Mesh
 {
-    GLuint vao;
-    GLuint vbo;
-    GLuint ebo;
-    unsigned int index_count;
+    GLuint vao;                // Vertex Array Object
+    GLuint vbo;                // Vertex Buffer Object
+    GLuint ebo;                // Element Buffer Object
+    unsigned int index_count;  // インデックスの数
 };

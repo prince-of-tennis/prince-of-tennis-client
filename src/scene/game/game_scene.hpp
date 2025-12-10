@@ -2,18 +2,18 @@
 
 #include "core/context.hpp"
 #include "network/network.hpp"
-#include "opengl/camera/opengl_camera.hpp"
-#include "opengl/light/opengl_light.hpp"
-#include "opengl/object/opengl_object.hpp"
-#include "opengl/shader/opengl_shader.hpp"
+#include "opengl/camera/EZ_Camera.hpp"
+#include "opengl/light/EZ_Light.hpp"
+#include "opengl/object/EZ_Object.hpp"
+#include "opengl/shader/EZ_Shader.hpp"
 #include "util/helper.hpp"
 
 struct GameScene
 {
-    UniquePtr<OpenGLObject> obj;
-    OpenGLShader shader;
-    OpenGLCamera camera;
-    OpenGLLight light;
+    EZ_Object object;
+    EZ_Shader shader;
+    EZ_Camera camera;
+    EZ_Light light;
     Context *context;
 
     UniquePtr<Network> network;

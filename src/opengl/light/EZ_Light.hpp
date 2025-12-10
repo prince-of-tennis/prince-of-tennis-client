@@ -4,10 +4,10 @@
 
 struct _EZ_Light
 {
-    glm::vec3 position;
-    glm::vec3 color;
-    float ambient_strength;
-    float specular_strength;
+    glm::vec3 position;       // ライトの位置
+    glm::vec3 color;          // ライトの色
+    float ambient_strength;   // 環境光強度
+    float specular_strength;  // 鏡面反射強度
 };
 
 /// @brief ライト

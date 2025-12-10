@@ -20,10 +20,10 @@ struct Transform
 
 struct _EZ_Object
 {
-    EZ_Model model;
-    EZ_Texture texture;
-    Transform transform;
-    bool is_active;
+    EZ_Model model;       // モデル構造体
+    EZ_Texture texture;   // テクスチャ構造体
+    Transform transform;  // 変換情報
+    bool is_active;       // オブジェクトがアクティブかどうか
 
     ~_EZ_Object();
 };

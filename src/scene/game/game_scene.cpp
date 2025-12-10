@@ -13,35 +13,33 @@ bool game_scene_init(GameScene *scene)
     LOG_DEBUG("GameScene初期化開始");
 
     // シェーダー初期化
-    if (!opengl_shader_init(&scene->shader, "shader/simple.vert", "shader/simple.frag"))
+    scene->shader = EZ_CreateShader("shader/simple.vert", "shader/simple.frag");
+    if (scene->shader == nullptr)
     {
-        LOG_ERROR("シェーダーの初期化に失敗しました");
+        LOG_ERROR("シェーダーの作成に失敗しました");
         return false;
     }
     LOG_SUCCESS("シェーダー初期化完了");
 
+    EZ_Model model = EZ_CreateModel("obj/tennis_court.obj");
+    EZ_Texture texture = EZ_CreateTexture("img/container.jpeg");
+
     // オブジェクト作成
-    scene->obj.reset(opengl_object_create("obj/tennis_court.obj", "img/container.jpeg"));
-    if (scene->obj == nullptr)
+    scene->object = EZ_CreateObjectFromModelTexture(model, texture);
+    if (scene->object == nullptr)
     {
         LOG_ERROR("オブジェクトの作成に失敗しました");
         return false;
     }
-
     // オブジェクトの位置を設定
-    opengl_object_set_position(scene->obj.get(), glm::vec3(0.0f, 0.0f, -5.0f));
+    EZ_ObjectSetPosition(scene->object, 0.0f, -1.0f, 0.0f);
 
     // カメラ初期化
-    opengl_camera_init(&scene->camera,
-                       scene->context->window_width / scene->context->window_height);
-    opengl_camera_set_position(&scene->camera, scene->context->camera_position);
-    opengl_camera_set_target(&scene->camera, scene->context->camera_target);
+    scene->camera = EZ_CreateCamera(
+        static_cast<float>(scene->context->window_width / scene->context->window_height));
 
     // ライト初期化
-    opengl_light_init(&scene->light);
-
-    // 深度テスト有効化
-    glEnable(GL_DEPTH_TEST);
+    scene->light = EZ_CreateLight();
 
     // Network
     scene->network.reset(new Network);
@@ -56,12 +54,6 @@ bool game_scene_init(GameScene *scene)
 
 bool game_scene_update(GameScene *scene)
 {
-    // カメラ更新
-    opengl_camera_update(&scene->camera);
-
-    // ライト更新
-    opengl_light_update(&scene->light);
-
     if (!network_listen_to_server(scene->network.get()))
     {
         return false;
@@ -77,9 +69,9 @@ void game_scene_draw(GameScene *scene)
                  scene->context->background_b, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (scene->obj)
+    if (scene->object)
     {
-        opengl_object_with_camera(&scene->camera, &scene->shader, &scene->light, scene->obj.get());
+        EZ_DrawObject(scene->object, scene->shader, scene->camera, scene->light);
     }
     else
     {
