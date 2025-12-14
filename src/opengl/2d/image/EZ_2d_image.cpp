@@ -65,7 +65,10 @@ EZ_2D_Image EZ_2D_CreateImage(const char *image_path)
 
 void _EZ_2D_DestroyImage(_EZ_2D_Image *image)
 {
-    if (!image) return;
+    if (!image)
+    {
+        return;
+    }
 
     if (image->texture_id != 0)
     {
@@ -86,6 +89,7 @@ void EZ_2D_DrawImage(EZ_2D_Image image, float x, float y, float width, float hei
 {
     if (!image || image->texture_id == 0)
     {
+        LOG_ERROR("画像がNULLです。");
         return;
     }
 
