@@ -18,7 +18,7 @@ void EZ_LightSetPosition(EZ_Light light, float x, float y, float z)
 
 void EZ_LightSetColor(EZ_Light light, int r, int g, int b)
 {
-    light->color = glm::vec3(r / 225.0f, g / 225.0f, b / 225.0f);
+    light->color = glm::vec3(r / 255.0f, g / 255.0f, b / 255.0f);
 }
 
 void EZ_LightSetAmbientStrength(EZ_Light light, float strength)
