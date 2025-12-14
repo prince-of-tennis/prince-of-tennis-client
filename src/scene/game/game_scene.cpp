@@ -69,7 +69,7 @@ bool game_scene_update(GameScene *scene)
     // TODO: ネットワークからボールのデータを受信して scene->ball_data に設定する
     // 例: scene->ball_data = scene->network->received_data.ball;
 
-    scene->ball_data.point.y -= 0.001;
+    scene->ball_data.point.y -= 0.1;
 
     // ボールオブジェクトの座標を更新
     EZ_ObjectSetPosition(scene->ball_object, scene->ball_data.point.x, scene->ball_data.point.y,

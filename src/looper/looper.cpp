@@ -11,6 +11,17 @@
 static Context g_context;
 static EasyGL g_opengl;
 
+// FPS制御用の変数
+static const int TARGET_FPS = 60;
+static const Uint32 TARGET_FRAME_TIME = 1000 / TARGET_FPS;  // ミリ秒
+
+// FPS制御用の内部変数
+static Uint32 g_frame_start = 0;
+
+#ifdef DEBUG
+static Uint32 g_fps_timer = 0;
+#endif
+
 void context_init()
 {
     g_context.window_width = 860;
@@ -23,6 +34,25 @@ void context_init()
 
     g_context.network_host = "localhost";
     g_context.network_port = 5000;
+}
+
+/// @brief フレーム開始時の処理
+static void fps_frame_start()
+{
+    g_frame_start = SDL_GetTicks();
+}
+
+/// @brief フレーム終了時の処理（FPS制限と計測）
+static void fps_frame_end()
+{
+    // フレーム時間を計算
+    Uint32 frame_time = SDL_GetTicks() - g_frame_start;
+
+    // 目標フレーム時間に満たない場合は待機
+    if (frame_time < TARGET_FRAME_TIME)
+    {
+        SDL_Delay(TARGET_FRAME_TIME - frame_time);
+    }
 }
 
 bool looper_init(Looper *looper, eSceneType default_scene)
@@ -74,8 +104,11 @@ bool looper_init(Looper *looper, eSceneType default_scene)
 void loop(Looper *looper)
 {
     SDL_bool is_running = SDL_TRUE;
+
     while (is_running)
     {
+        fps_frame_start();
+
         // イベント処理
         is_running = window_manager_update();
 
@@ -87,6 +120,8 @@ void loop(Looper *looper)
             // バッファスワップ
             SDL_GL_SwapWindow(g_context.window);
         }
+
+        fps_frame_end();
 
         // PlayerInput player_input = get_joycon(&looper->joycon);
         // if (player_input.right)
