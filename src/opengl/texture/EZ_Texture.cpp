@@ -56,7 +56,6 @@ EZ_Texture EZ_CreateTexture(const char *texture_file_path)
     glBindTexture(GL_TEXTURE_2D, 0);
 
     LOG_SUCCESS("テクスチャ初期化完了: ID=" << texture->texture);
-
     return texture;
 }
 

@@ -13,7 +13,6 @@ using namespace std;
 struct EasyGL
 {
     SDL_GLContext context;
-
     ~EasyGL();
 };
 

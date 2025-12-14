@@ -178,7 +178,6 @@ bool _EZ_2D_LoadGlyph(_EZ_2D_Font *font, uint32_t codepoint)
     int height = font->face->glyph->bitmap.rows;
     unsigned char *buffer = font->face->glyph->bitmap.buffer;
 
-    // OpenGLテクスチャを生成
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -276,11 +275,10 @@ void EZ_2D_DrawText(EZ_2D_Font font, float x, float y, const char *text, float s
 
         // ベースラインに合わせた位置計算
         float xpos = x + ch.bearing.x * scale;
-        float ypos = y - ch.bearing.y * scale;  // ベースライン補正
+        float ypos = y - ch.bearing.y * scale;  // ベースライン基準の座標計算
         float w = ch.size.x * scale;
         float h = ch.size.y * scale;
 
-        // UV座標を修正: 上(ypos)がV=0.0、下(ypos+h)がV=1.0
         float vertices[6][4] = {
             {xpos, ypos + h, 0.0f, 1.0f},  // 左下
             {xpos, ypos, 0.0f, 0.0f},      // 左上
