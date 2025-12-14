@@ -38,4 +38,9 @@ bool EZ_Init(EasyGL *gl, Context *context)
 EasyGL::~EasyGL()
 {
     _EZ_2D_Destroy();
+    if (context != NULL)
+    {
+        SDL_GL_DeleteContext(context);
+        context = NULL;
+    }
 }
