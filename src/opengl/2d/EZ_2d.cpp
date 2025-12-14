@@ -198,7 +198,7 @@ static bool _EZ_2D_InitCircleMesh()
     // 円周上の点
     for (int i = 0; i <= segments; i++)
     {
-        float angle = 2.0f * M_PI * i / segments;
+        float angle = 2.0f * glm::pi<float>() * i / segments;
         float x = radius * cos(angle);
         float y = radius * sin(angle);
         vertices.push_back(x);
