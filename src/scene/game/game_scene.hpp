@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/ball.h"
 #include "core/context.hpp"
 #include "network/network.hpp"
 #include "opengl/2d/EZ_2d.h"
@@ -11,13 +12,16 @@
 
 struct GameScene
 {
-    EZ_Object obj;
     EZ_Shader shader;
     EZ_Camera camera;
     EZ_Light light;
     Context *context;
 
     UniquePtr<Network> network;
+
+    // ボール
+    EZ_Object ball_object;
+    Ball ball_data;
 
     // 2D描画用
     EZ_2D_Font font;
