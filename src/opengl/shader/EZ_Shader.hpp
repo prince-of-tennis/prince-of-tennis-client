@@ -28,9 +28,9 @@ EZ_Shader EZ_CreateShader();
 EZ_Shader EZ_CreateCustomShader(const char *vertex_file_path, const char *fragment_file_path);
 
 /// @brief Shaderの解放
-/// @param shader OpenGLShader
+/// @param shader _EZ_Shader
 void _EZ_DestroyShader(_EZ_Shader *shader);
 
 /// @brief Shaderを使用
-/// @param shader OpenGLShader
+/// @param shader _EZ_Shader
 void _EZ_UseShader(_EZ_Shader *shader);
