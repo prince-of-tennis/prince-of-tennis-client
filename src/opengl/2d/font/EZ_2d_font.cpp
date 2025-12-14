@@ -293,13 +293,13 @@ void EZ_2D_DrawText(EZ_2D_Font font, float x, float y, const char *text, float s
         float h = ch.size.y * scale;
 
         float vertices[6][4] = {
-            {xpos, ypos + h, 0.0f, 1.0f},  // 左下
-            {xpos, ypos, 0.0f, 0.0f},      // 左上
-            {xpos + w, ypos, 1.0f, 0.0f},  // 右上
+            {xpos, ypos + h, 0.0f, 1.0f},  // 左上
+            {xpos, ypos, 0.0f, 0.0f},      // 左下
+            {xpos + w, ypos, 1.0f, 0.0f},  // 右下
 
-            {xpos, ypos + h, 0.0f, 1.0f},     // 左下
-            {xpos + w, ypos, 1.0f, 0.0f},     // 右上
-            {xpos + w, ypos + h, 1.0f, 1.0f}  // 右下
+            {xpos, ypos + h, 0.0f, 1.0f},     // 左上
+            {xpos + w, ypos, 1.0f, 0.0f},     // 右下
+            {xpos + w, ypos + h, 1.0f, 1.0f}  // 右上
         };
 
         glBindTexture(GL_TEXTURE_2D, ch.texture_id);
