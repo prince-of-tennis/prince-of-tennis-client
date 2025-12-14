@@ -111,7 +111,11 @@ EZ_2D_Font EZ_2D_CreateFont(const char *font_path, int font_size)
 
 void _EZ_2D_DestroyFont(_EZ_2D_Font *font)
 {
-    if (!font) return;
+    if (!font)
+    {
+        LOG_ERROR("fontがNULLです。");
+        return;
+    }
 
     // テクスチャの解放
     for (auto &pair : font->characters)
