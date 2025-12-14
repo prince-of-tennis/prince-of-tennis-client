@@ -11,7 +11,7 @@
 
 struct GameScene
 {
-    EZ_Object object;
+    EZ_Object obj;
     EZ_Shader shader;
     EZ_Camera camera;
     EZ_Light light;
