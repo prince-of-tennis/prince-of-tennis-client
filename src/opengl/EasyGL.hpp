@@ -13,6 +13,8 @@ using namespace std;
 struct EasyGL
 {
     SDL_GLContext context;
+
+    ~EasyGL();
 };
 
 /// @brief OpenGL関連の初期化

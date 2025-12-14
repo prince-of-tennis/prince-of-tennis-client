@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL.h>
 
+#include "opengl/2d/EZ_2d.h"
 #include "opengl/glad/glad.h"
 #include "util/log.hpp"
 
@@ -32,4 +33,9 @@ bool EZ_Init(EasyGL *gl, Context *context)
     glEnable(GL_DEPTH_TEST);
 
     return true;
+}
+
+EasyGL::~EasyGL()
+{
+    _EZ_2D_Destroy();
 }
