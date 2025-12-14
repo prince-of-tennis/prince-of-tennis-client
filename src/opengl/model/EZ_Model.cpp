@@ -1,4 +1,4 @@
-#include "opengl_model.hpp"
+#include "EZ_Model.hpp"
 
 #include <SDL2/SDL.h>
 #include <assimp/postprocess.h>
@@ -12,19 +12,20 @@
 
 using namespace std;
 
-bool opengl_model_init(OpenGLModel *model, string model_file)
+EZ_Model EZ_CreateModel(string model_file_path)
 {
-    LOG_DEBUG("モデル読み込み開始: " << model_file);
+    auto model = make_shared<_EZ_Model>();
+    LOG_DEBUG("モデル読み込み開始: " << model_file_path);
 
     Assimp::Importer importer;
-    model->model_file = model_file;
+    model->model_file_path = model_file_path;
     const aiScene *scene =
-        importer.ReadFile(model->model_file.c_str(),
+        importer.ReadFile(model->model_file_path.c_str(),
                           aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
         LOG_ERROR("Assimpモデル読み込み失敗: " << importer.GetErrorString());
-        return false;
+        return nullptr;
     }
     LOG_SUCCESS("Assimpモデル読み込み成功: meshes=" << scene->mNumMeshes);
 
@@ -33,7 +34,7 @@ bool opengl_model_init(OpenGLModel *model, string model_file)
         std::vector<float> vertices;
         std::vector<unsigned int> indices;
 
-        aiMesh *mesh = scene->mMeshes[i];
+        const aiMesh *mesh = scene->mMeshes[i];
 
         for (unsigned int j = 0; j < mesh->mNumVertices; j++)
         {
@@ -65,25 +66,25 @@ bool opengl_model_init(OpenGLModel *model, string model_file)
             }
         }
 
-        OpenGLMesh opengl_mesh;
+        EZ_Mesh ez_mesh;
 
-        opengl_mesh.index_count = indices.size();
+        ez_mesh.index_count = indices.size();
         LOG_DEBUG("モデルデータ: vertices=" << vertices.size() / 8
                                             << ", indices=" << indices.size());
 
-        glGenVertexArrays(1, &opengl_mesh.vao);
-        glGenBuffers(1, &opengl_mesh.vbo);
-        glGenBuffers(1, &opengl_mesh.ebo);
-        LOG_DEBUG("OpenGL バッファ生成: VAO=" << opengl_mesh.vao << ", VBO=" << opengl_mesh.vbo
-                                              << ", EBO=" << opengl_mesh.ebo);
+        glGenVertexArrays(1, &ez_mesh.vao);
+        glGenBuffers(1, &ez_mesh.vbo);
+        glGenBuffers(1, &ez_mesh.ebo);
+        LOG_DEBUG("OpenGL バッファ生成: VAO=" << ez_mesh.vao << ", VBO=" << ez_mesh.vbo
+                                              << ", EBO=" << ez_mesh.ebo);
 
-        glBindVertexArray(opengl_mesh.vao);
+        glBindVertexArray(ez_mesh.vao);
 
-        glBindBuffer(GL_ARRAY_BUFFER, opengl_mesh.vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, ez_mesh.vbo);
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(),
                      GL_STATIC_DRAW);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, opengl_mesh.ebo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ez_mesh.ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(),
                      GL_STATIC_DRAW);
 
@@ -99,17 +100,12 @@ bool opengl_model_init(OpenGLModel *model, string model_file)
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        model->meshes.push_back(opengl_mesh);
+        model->meshes.push_back(ez_mesh);
     }
-
-    for (auto mesh : model->meshes)
-    {
-        LOG_SUCCESS("モデル初期化完了: index_count=" << mesh.index_count);
-    }
-    return true;
+    return model;
 }
 
-void opengl_model_destroy(OpenGLModel *model)
+void _EZ_DestroyModel(_EZ_Model *model)
 {
     for (auto mesh : model->meshes)
     {
@@ -135,7 +131,7 @@ void opengl_model_destroy(OpenGLModel *model)
     model->meshes.clear();
 }
 
-void opengl_model_draw(OpenGLModel *model)
+void _EZ_DrawModel(_EZ_Model *model)
 {
     for (auto mesh : model->meshes)
     {
@@ -143,4 +139,9 @@ void opengl_model_draw(OpenGLModel *model)
         glDrawElements(GL_TRIANGLES, mesh.index_count, GL_UNSIGNED_INT, 0);
     }
     glBindVertexArray(0);
+}
+
+_EZ_Model::~_EZ_Model()
+{
+    _EZ_DestroyModel(this);
 }

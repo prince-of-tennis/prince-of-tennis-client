@@ -1,4 +1,4 @@
-#include "opengl_texture.hpp"
+#include "EZ_Texture.hpp"
 
 #include <iostream>
 
@@ -9,17 +9,18 @@
 
 using namespace std;
 
-bool opengl_texture_init(OpenGLTexture *texture, const char *texture_file)
+EZ_Texture EZ_CreateTexture(const char *texture_file_path)
 {
-    LOG_DEBUG("テクスチャ読み込み開始: " << texture_file);
+    auto texture = make_shared<_EZ_Texture>();
+
     stbi_set_flip_vertically_on_load(true);
 
     unsigned char *data =
-        stbi_load(texture_file, &texture->width, &texture->height, &texture->channels, 0);
+        stbi_load(texture_file_path, &texture->width, &texture->height, &texture->channels, 0);
     if (!data)
     {
-        LOG_ERROR("テクスチャの読み込みに失敗しました: " << texture_file);
-        return false;
+        LOG_ERROR("テクスチャの読み込みに失敗しました: " << texture_file_path);
+        return nullptr;
     }
     LOG_SUCCESS("画像読み込み成功: " << texture->width << "x" << texture->height
                                      << ", channels=" << texture->channels);
@@ -55,10 +56,10 @@ bool opengl_texture_init(OpenGLTexture *texture, const char *texture_file)
     glBindTexture(GL_TEXTURE_2D, 0);
 
     LOG_SUCCESS("テクスチャ初期化完了: ID=" << texture->texture);
-    return true;
+    return texture;
 }
 
-void opengl_texture_destroy(OpenGLTexture *texture)
+void _EZ_DestroyTexture(_EZ_Texture *texture)
 {
     if (texture->texture != 0)
     {
@@ -67,8 +68,17 @@ void opengl_texture_destroy(OpenGLTexture *texture)
     }
 }
 
-void opengl_texture_bind(OpenGLTexture *texture, unsigned int slot)
+void _EZ_BindTexture(_EZ_Texture *texture, unsigned int slot)
 {
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, texture->texture);
+}
+
+_EZ_Texture::~_EZ_Texture()
+{
+    if (texture != 0)
+    {
+        glDeleteTextures(1, &texture);
+        texture = 0;
+    }
 }

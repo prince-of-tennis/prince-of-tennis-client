@@ -1,4 +1,4 @@
-#include "opengl_shader.hpp"
+#include "EZ_Shader.hpp"
 
 #include <SDL2/SDL.h>
 
@@ -8,17 +8,91 @@
 #include <string>
 
 #include "opengl/glad/glad.h"
+#include "opengl/texture/EZ_Texture.hpp"
 #include "util/log.hpp"
 
-bool opengl_shader_init(OpenGLShader *shader, const char *vertex_file, const char *fragment_file)
+// デフォルトの頂点シェーダー
+static const char *DEFAULT_VERTEX_SHADER = R"(
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec2 aTexCoord;
+layout (location = 2) in vec3 aNormal;
+
+out vec2 TexCoord;
+out vec3 Normal;
+out vec3 FragPos;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
 {
-    LOG_DEBUG("シェーダー初期化開始: vertex=" << vertex_file << ", fragment=" << fragment_file);
+    FragPos = vec3(model * vec4(aPos, 1.0));
+    Normal = mat3(transpose(inverse(model))) * aNormal;
+    TexCoord = aTexCoord;
+
+    gl_Position = projection * view * vec4(FragPos, 1.0);
+}
+)";
+
+// デフォルトのフラグメントシェーダー
+static const char *DEFAULT_FRAGMENT_SHADER = R"(
+#version 330 core
+out vec4 FragColor;
+
+in vec2 TexCoord;
+in vec3 Normal;
+in vec3 FragPos;
+
+uniform sampler2D texture1;
+uniform vec3 lightPos;
+uniform vec3 lightColor;
+uniform vec3 viewPos;
+
+void main()
+{
+    // Ambient
+    float ambientStrength = 0.3;
+    vec3 ambient = ambientStrength * lightColor;
+
+    // Diffuse
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(lightPos - FragPos);
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = diff * lightColor;
+
+    // Specular
+    float specularStrength = 0.5;
+    vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+    vec3 specular = specularStrength * spec * lightColor;
+
+    vec3 result = (ambient + diffuse + specular) * texture(texture1, TexCoord).rgb;
+    FragColor = vec4(result, 1.0);
+}
+)";
+
+EZ_Shader EZ_CreateShader()
+{
+    const char *vertex_shader_code = DEFAULT_VERTEX_SHADER;
+    const char *fragment_shader_code = DEFAULT_FRAGMENT_SHADER;
+
+    EZ_Shader shader = EZ_CreateShaderFromSource(vertex_shader_code, fragment_shader_code);
+    return shader;
+}
+
+EZ_Shader EZ_CreateCustomShader(const char *vertex_file_path, const char *fragment_file_path)
+{
+    auto shader = std::make_shared<_EZ_Shader>();
+
     std::string vertex_shader_source;
     std::string fragment_shader_source;
 
     try
     {
-        std::ifstream vertex_shader_file(vertex_file);
+        std::ifstream vertex_shader_file(vertex_file_path);
         if (!vertex_shader_file.is_open())
         {
             throw std::runtime_error("Failed to open vertex file");
@@ -31,12 +105,12 @@ bool opengl_shader_init(OpenGLShader *shader, const char *vertex_file, const cha
     catch (const std::exception &e)
     {
         LOG_ERROR(e.what());
-        return false;
+        return nullptr;
     }
 
     try
     {
-        std::ifstream fragment_shader_file(fragment_file);
+        std::ifstream fragment_shader_file(fragment_file_path);
         if (!fragment_shader_file.is_open())
         {
             throw std::runtime_error("Failed to open fragment file");
@@ -49,13 +123,19 @@ bool opengl_shader_init(OpenGLShader *shader, const char *vertex_file, const cha
     catch (const std::exception &e)
     {
         LOG_ERROR(e.what());
-        return false;
+        return nullptr;
     }
 
     const char *vertex_shader_code = vertex_shader_source.c_str();
     const char *fragment_shader_code = fragment_shader_source.c_str();
 
-    // MARK: Compile
+    return EZ_CreateShaderFromSource(vertex_shader_code, fragment_shader_code);
+}
+
+EZ_Shader EZ_CreateShaderFromSource(const char *vertex_shader_code,
+                                    const char *fragment_shader_code)
+{
+    auto shader = std::make_shared<_EZ_Shader>();
 
     unsigned int vertex_shader;
     unsigned int fragment_shader;
@@ -71,7 +151,7 @@ bool opengl_shader_init(OpenGLShader *shader, const char *vertex_file, const cha
     {
         glGetShaderInfoLog(vertex_shader, 512, NULL, infoLog);
         LOG_ERROR("Vertex: " << infoLog);
-        return false;
+        return nullptr;
     }
 
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -83,7 +163,7 @@ bool opengl_shader_init(OpenGLShader *shader, const char *vertex_file, const cha
     {
         glGetShaderInfoLog(fragment_shader, 512, NULL, infoLog);
         LOG_ERROR("Shader: " << infoLog);
-        return false;
+        return nullptr;
     }
 
     unsigned int shader_program;
@@ -98,7 +178,7 @@ bool opengl_shader_init(OpenGLShader *shader, const char *vertex_file, const cha
     {
         glGetShaderInfoLog(fragment_shader, 512, NULL, infoLog);
         LOG_ERROR("Shader Program Linking Failed: " << infoLog);
-        return false;
+        return nullptr;
     }
 
     glDeleteShader(vertex_shader);
@@ -117,14 +197,14 @@ bool opengl_shader_init(OpenGLShader *shader, const char *vertex_file, const cha
         shader->light_loc == -1 || shader->light_color_loc == -1 || shader->view_pos_loc == -1)
     {
         LOG_ERROR("uniform variable not found");
-        return false;
+        return nullptr;
     }
 
     LOG_SUCCESS("シェーダー初期化完了: program=" << shader->program);
-    return true;
+    return shader;
 }
 
-void opengl_shader_destroy(OpenGLShader *shader)
+void _EZ_DestroyShader(_EZ_Shader *shader)
 {
     if (shader->program != 0)
     {
@@ -133,7 +213,12 @@ void opengl_shader_destroy(OpenGLShader *shader)
     }
 }
 
-void opengl_shader_use(OpenGLShader *shader)
+void _EZ_UseShader(_EZ_Shader *shader)
 {
     glUseProgram(shader->program);
+}
+
+_EZ_Shader::~_EZ_Shader()
+{
+    _EZ_DestroyShader(this);
 }

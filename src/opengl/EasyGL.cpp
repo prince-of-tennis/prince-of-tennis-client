@@ -1,11 +1,11 @@
-#include "opengl/opengl.hpp"
+#include "opengl/EasyGL.hpp"
 
 #include <SDL2/SDL.h>
 
 #include "opengl/glad/glad.h"
 #include "util/log.hpp"
 
-bool opengl_init(OpenGL *gl, Context *context)
+bool EZ_Init(EasyGL *gl, Context *context)
 {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -27,7 +27,9 @@ bool opengl_init(OpenGL *gl, Context *context)
 
     glViewport(0, 0, context->window_width, context->window_height);
 
-    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
+    LOG_DEBUG("OpenGL Version: " << glGetString(GL_VERSION));
+
+    glEnable(GL_DEPTH_TEST);
 
     return true;
 }

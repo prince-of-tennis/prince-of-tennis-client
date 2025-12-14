@@ -8,12 +8,20 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_definitions(DEBUG=1)
+add_compile_definitions(EZ_LOG_ENABLED=1)
 
 # 2. ライブラリの検索
 # -----------------
 # システム (apt-get) でインストールしたライブラリを探す
 # (成功すると SDL2_INCLUDE_DIRS と SDL2_LIBRARIES 変数が設定される)
 find_package(SDL2 REQUIRED)
+
+# SDL_netの読み込み
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SDL2_NET REQUIRED SDL2_net)
+
+# FreeTypeの読み込み
+pkg_check_modules(FREETYPE REQUIRED freetype2)
 
 # 3. ソースファイルの定義
 # -----------------
@@ -26,32 +34,30 @@ list(APPEND SOURCES "libs/opengl/glad/glad.c")
 # -----------------
 add_executable(client ${SOURCES})
 
-# SDL_netの読み込み
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SDL2_NET REQUIRED SDL2_net)
-
 # 5. インクルードパスの指定 (★修正箇所)
 # -----------------
 target_include_directories(client PRIVATE
-    "src"
-    "libs"
-    "libs/opengl"
-    ${SDL2_INCLUDE_DIRS} # SDL2のヘッダファイルへのパスを追加
-    ${SDL2_NET_INCLUDE_DIRS}
+        "src"
+        "libs"
+        "libs/opengl"
+        ${SDL2_INCLUDE_DIRS} # SDL2のヘッダファイルへのパスを追加
+        ${SDL2_NET_INCLUDE_DIRS}
+        ${FREETYPE_INCLUDE_DIRS}
 )
 
 # 6. ライブラリのリンク (★修正箇所)
 # -----------------
 target_link_libraries(client PRIVATE
 
-    # --- システムライブラリ ---
-    ${SDL2_LIBRARIES} # SDL2::SDL2 の代わりにこの変数を使う
-    ${SDL2_NET_LIBRARIES} # SDL2_net
-    assimp
-    dl
-    joyconlib
-    hidapi-hidraw
-    m
+        # --- システムライブラリ ---
+        ${SDL2_LIBRARIES} # SDL2::SDL2 の代わりにこの変数を使う
+        ${SDL2_NET_LIBRARIES} # SDL2_net
+        ${FREETYPE_LIBRARIES} # FreeType
+        assimp
+        dl
+        joyconlib
+        hidapi-hidraw
+        m
 )
 
 # (オプション) アセットフォルダを実行ファイルと同じ場所にコピー
