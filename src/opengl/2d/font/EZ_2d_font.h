@@ -3,6 +3,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include <cstdint>
 #include <map>
 #include <memory>
 
@@ -24,7 +25,7 @@ struct Character
 struct _EZ_2D_Font
 {
     FT_Face face;
-    map<char, Character> characters;
+    map<uint32_t, Character> characters;  // UTF-8対応: charからuint32_tに変更
     int font_size;
 
     ~_EZ_2D_Font();
@@ -41,6 +42,17 @@ EZ_2D_Font EZ_2D_CreateFont(const char *font_path, int font_size = 48);
 /// @brief フォントの解放
 /// @param font フォント構造体
 void _EZ_2D_DestroyFont(_EZ_2D_Font *font);
+
+/// @brief UTF-8文字列から次の1文字のコードポイントを取得
+/// @param text UTF-8文字列のポインタ（参照渡しで進められる）
+/// @return Unicodeコードポイント
+uint32_t _EZ_2D_GetNextUTF8Char(const char **text);
+
+/// @brief 指定されたコードポイントのグリフを読み込んでキャッシュ
+/// @param font フォント構造体
+/// @param codepoint Unicodeコードポイント
+/// @return 成功したかどうか
+bool _EZ_2D_LoadGlyph(_EZ_2D_Font *font, uint32_t codepoint);
 
 /// @brief テキストの描画
 /// @param font 使用するフォント

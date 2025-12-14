@@ -1,6 +1,6 @@
 #include "joycon.hpp"
 
-#include <joyconlib.h>
+// #include <joyconlib.h>
 #include <math.h>
 #include <stdio.h>
 

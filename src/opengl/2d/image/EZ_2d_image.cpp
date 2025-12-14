@@ -24,6 +24,7 @@ EZ_2D_Image EZ_2D_CreateImage(const char *image_path)
     auto image = make_shared<_EZ_2D_Image>();
 
     // stb_imageを使用して画像を読み込み
+    stbi_set_flip_vertically_on_load(false);
     int channels;
     unsigned char *data = stbi_load(image_path, &image->width, &image->height, &channels, 0);
 
