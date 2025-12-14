@@ -88,8 +88,6 @@ EZ_Object EZ_CreateObjectFromModelTexture(EZ_Model model, EZ_Texture texture)
 
 void _EZ_DestroyObject(_EZ_Object *obj)
 {
-    _EZ_DestroyModel(obj->model.get());
-    _EZ_DestroyTexture(obj->texture.get());
     obj->is_active = false;
 }
 
