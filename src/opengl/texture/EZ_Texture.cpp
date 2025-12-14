@@ -76,9 +76,5 @@ void _EZ_BindTexture(_EZ_Texture *texture, unsigned int slot)
 
 _EZ_Texture::~_EZ_Texture()
 {
-    if (texture != 0)
-    {
-        glDeleteTextures(1, &texture);
-        texture = 0;
-    }
+    _EZ_DestroyTexture(this);
 }

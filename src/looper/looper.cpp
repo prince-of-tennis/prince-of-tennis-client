@@ -115,9 +115,8 @@ void loop(Looper *looper)
 void looper_fini(Looper *looper)
 {
     scene_manager_fini(looper->scene_manager);
-    _EZ_2D_Destroy();
     window_manager_fini();
-    joycon_fini(&looper->joycon);
+    // joycon_fini(&looper->joycon);
     SDL_Quit();
     LOG_SUCCESS("SDLを終了しました");
 }

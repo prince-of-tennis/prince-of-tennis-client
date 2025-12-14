@@ -50,7 +50,7 @@ bool game_scene_init(GameScene *scene)
     }
 
     // フォントの読み込み（オプション）
-    scene->font = EZ_2D_CreateFont("assets/fonts/font.otf", 48);
+    scene->font = EZ_2D_CreateFont("fonts/font.otf", 48);
     if (!scene->font)
     {
         LOG_WARN("フォントの読み込みに失敗しました。テキスト描画は無効化されます。");
@@ -96,7 +96,7 @@ void game_scene_draw(GameScene *scene)
     // 2D描画テスト
     EZ_2D_DrawRect(50, 50, 200, 100, 0.0f, 1.0f, 0.0f, 0.8f);  // 緑の半透明矩形
     EZ_2D_DrawCircle(400, 300, 50, 1.0f, 0.0f, 0.0f, 1.0f);    // 赤い円
-    EZ_2D_DrawText(scene->font, 100, 200, "Hello, EZ_2D!", 32, 1.0f, 1.0f, 1.0f,
+    EZ_2D_DrawText(scene->font, 100, 200, "こんにちは", 32, 1.0f, 1.0f, 1.0f,
                    1.0f);                                                        // 白いテキスト
     EZ_2D_DrawImage(scene->test_image, 300, 150, 0, 0, 1.0f, 1.0f, 1.0f, 1.0f);  // 元のサイズで描画
     EZ_2D_DrawImage(scene->test_image, 500, 150, 100, 100, 1.0f, 1.0f, 1.0f,
