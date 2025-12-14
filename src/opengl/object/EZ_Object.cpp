@@ -53,8 +53,6 @@ EZ_Object EZ_CreateObjectFromModel(EZ_Model model, const char *texture_file)
     if (!object)
     {
         LOG_ERROR("EZ_Objectの作成に失敗しました");
-        _EZ_DestroyModel(model.get());
-        _EZ_DestroyTexture(texture.get());
         return nullptr;
     }
 
