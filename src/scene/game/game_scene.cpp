@@ -22,18 +22,24 @@ bool game_scene_init(GameScene *scene)
     }
     LOG_SUCCESS("シェーダー初期化完了");
 
-    EZ_Model model = EZ_CreateModel("obj/tennis_court.obj");
-    EZ_Texture texture = EZ_CreateTexture("img/container.jpeg");
-
-    // オブジェクト作成
-    scene->obj = EZ_CreateObjectFromModelTexture(model, texture);
-    if (scene->obj == nullptr)
+    // ボールオブジェクトの初期化
+    scene->ball_object = EZ_CreateObject("obj/ball.obj", "img/container.jpeg");
+    if (scene->ball_object == nullptr)
     {
-        LOG_ERROR("オブジェクトの作成に失敗しました");
+        LOG_ERROR("ボールオブジェクトの作成に失敗しました");
         return false;
     }
-    // オブジェクトの位置を設定
-    EZ_ObjectSetPosition(scene->obj, 0.0f, -1.0f, 0.0f);
+
+    // ボールの初期座標を設定（テスト用）
+    scene->ball_data.point.x = 0.0f;
+    scene->ball_data.point.y = 2.0f;
+    scene->ball_data.point.z = 0.0f;
+
+    EZ_ObjectSetPosition(scene->ball_object, scene->ball_data.point.x, scene->ball_data.point.y,
+                         scene->ball_data.point.z);
+    EZ_ObjectSetScale(scene->ball_object, 0.2, 0.2, 0.2);
+
+    LOG_SUCCESS("ボールオブジェクト初期化完了");
 
     // カメラ初期化
     scene->camera = EZ_CreateCamera(static_cast<float>(scene->context->window_width) /
@@ -49,20 +55,6 @@ bool game_scene_init(GameScene *scene)
         return false;
     }
 
-    // フォントの読み込み（オプション）
-    scene->font = EZ_2D_CreateFont("fonts/font.otf", 48);
-    if (!scene->font)
-    {
-        LOG_WARN("フォントの読み込みに失敗しました。テキスト描画は無効化されます。");
-    }
-
-    // 画像の読み込み（オプション）
-    scene->test_image = EZ_2D_CreateImage("img/screen.jpg");
-    if (!scene->test_image)
-    {
-        LOG_WARN("画像の読み込みに失敗しました。");
-    }
-
     LOG_SUCCESS("GameScene初期化完了");
     return true;
 }
@@ -74,6 +66,15 @@ bool game_scene_update(GameScene *scene)
         return false;
     }
 
+    // TODO: ネットワークからボールのデータを受信して scene->ball_data に設定する
+    // 例: scene->ball_data = scene->network->received_data.ball;
+
+    scene->ball_data.point.y -= 0.001;
+
+    // ボールオブジェクトの座標を更新
+    EZ_ObjectSetPosition(scene->ball_object, scene->ball_data.point.x, scene->ball_data.point.y,
+                         scene->ball_data.point.z);
+
     return true;
 }
 
@@ -84,21 +85,9 @@ void game_scene_draw(GameScene *scene)
                  scene->context->background_b, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (scene->obj)
+    // ボールの描画
+    if (scene->ball_object)
     {
-        EZ_DrawObject(scene->obj, scene->shader, scene->camera, scene->light);
+        EZ_DrawObject(scene->ball_object, scene->shader, scene->camera, scene->light);
     }
-    else
-    {
-        LOG_ERROR("描画対象のオブジェクトがnullです");
-    }
-
-    // 2D描画テスト
-    EZ_2D_DrawRect(50, 50, 200, 100, 0.0f, 1.0f, 0.0f, 0.8f);  // 緑の半透明矩形
-    EZ_2D_DrawCircle(400, 300, 50, 1.0f, 0.0f, 0.0f, 1.0f);    // 赤い円
-    EZ_2D_DrawText(scene->font, 100, 200, "こんにちは", 32, 1.0f, 1.0f, 1.0f,
-                   1.0f);                                                        // 白いテキスト
-    EZ_2D_DrawImage(scene->test_image, 300, 150, 0, 0, 1.0f, 1.0f, 1.0f, 1.0f);  // 元のサイズで描画
-    EZ_2D_DrawImage(scene->test_image, 500, 150, 100, 100, 1.0f, 1.0f, 1.0f,
-                    0.5f);  // 100x100にリサイズ、半透明
 }
