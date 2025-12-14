@@ -58,7 +58,7 @@ EZ_Object EZ_CreateObjectFromModel(EZ_Model model, const char *texture_file)
         return nullptr;
     }
 
-    LOG_SUCCESS("OpenGLObject作成完了");
+    LOG_SUCCESS("EZ_Object作成完了");
     return object;
 }
 
@@ -84,7 +84,7 @@ EZ_Object EZ_CreateObjectFromModelTexture(EZ_Model model, EZ_Texture texture)
     obj->transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
     obj->is_active = true;
 
-    LOG_SUCCESS("OpenGLObject作成完了");
+    LOG_SUCCESS("EZ_Object作成完了");
     return obj;
 }
 
