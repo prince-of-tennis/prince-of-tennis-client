@@ -26,14 +26,14 @@ bool game_scene_init(GameScene *scene)
     EZ_Texture texture = EZ_CreateTexture("img/container.jpeg");
 
     // オブジェクト作成
-    scene->object = EZ_CreateObjectFromModelTexture(model, texture);
-    if (scene->object == nullptr)
+    scene->obj = EZ_CreateObjectFromModelTexture(model, texture);
+    if (scene->obj == nullptr)
     {
         LOG_ERROR("オブジェクトの作成に失敗しました");
         return false;
     }
     // オブジェクトの位置を設定
-    EZ_ObjectSetPosition(scene->object, 0.0f, -1.0f, 0.0f);
+    EZ_ObjectSetPosition(scene->obj, 0.0f, -1.0f, 0.0f);
 
     // カメラ初期化
     scene->camera = EZ_CreateCamera(
@@ -84,9 +84,9 @@ void game_scene_draw(GameScene *scene)
                  scene->context->background_b, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (scene->object)
+    if (scene->obj)
     {
-        EZ_DrawObject(scene->object, scene->shader, scene->camera, scene->light);
+        EZ_DrawObject(scene->obj, scene->shader, scene->camera, scene->light);
     }
     else
     {
