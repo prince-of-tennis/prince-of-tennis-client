@@ -57,7 +57,14 @@ uint32_t _EZ_2D_GetNextUTF8Char(const char **text)
     else
     {
         // 不正なUTF-8シーケンス
+        // 継続バイト(0x80-0xBF)または無効な開始バイト(0xF8以上)の場合、
+        // 次の有効なUTF-8シーケンス開始位置までスキップ
         (*text)++;
+        while (**text != 0 && (((unsigned char)**text & 0xC0) == 0x80))
+        {
+            // 継続バイトをスキップ
+            (*text)++;
+        }
         return 0xFFFD;  // 置換文字
     }
 
@@ -66,8 +73,14 @@ uint32_t _EZ_2D_GetNextUTF8Char(const char **text)
     {
         if ((bytes[i] & 0xC0) != 0x80)
         {
-            // 不正なUTF-8シーケンス
+            // 不正なUTF-8シーケンス（継続バイトが期待される位置に無効なバイト）
+            // 次の有効なUTF-8シーケンス開始位置までスキップ
             (*text)++;
+            while (**text != 0 && (((unsigned char)**text & 0xC0) == 0x80))
+            {
+                // 継続バイトをスキップ
+                (*text)++;
+            }
             return 0xFFFD;
         }
         codepoint = (codepoint << 6) | (bytes[i] & 0x3F);
