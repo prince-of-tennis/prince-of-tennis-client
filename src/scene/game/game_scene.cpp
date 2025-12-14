@@ -36,8 +36,8 @@ bool game_scene_init(GameScene *scene)
     EZ_ObjectSetPosition(scene->obj, 0.0f, -1.0f, 0.0f);
 
     // カメラ初期化
-    scene->camera = EZ_CreateCamera(
-        static_cast<float>(scene->context->window_width / scene->context->window_height));
+    scene->camera = EZ_CreateCamera(static_cast<float>(scene->context->window_width) /
+                                    static_cast<float>(scene->context->window_height));
 
     // ライト初期化
     scene->light = EZ_CreateLight();
