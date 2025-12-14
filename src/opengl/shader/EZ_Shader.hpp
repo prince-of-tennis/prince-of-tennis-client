@@ -27,13 +27,6 @@ EZ_Shader EZ_CreateShader();
 /// @return 作成されたShader
 EZ_Shader EZ_CreateCustomShader(const char *vertex_file_path, const char *fragment_file_path);
 
-/// @brief Shaderの初期化
-/// @param shader OpenGLShader
-/// @param vertex_file .vertファイルのパス
-/// @param fragment_file .fragファイルのパス
-/// @return 成功したか
-bool opengl_shader_init(_EZ_Shader *shader, const char *vertex_file, const char *fragment_file);
-
 /// @brief Shaderの解放
 /// @param shader OpenGLShader
 void _EZ_DestroyShader(_EZ_Shader *shader);

@@ -23,6 +23,6 @@ EZ_Texture EZ_CreateTexture(const char *texture_file_path);
 void _EZ_DestroyTexture(_EZ_Texture *texture);
 
 /// @brief テクスチャをバインド
-/// @param texture OpenGLTexture構造体
+/// @param texture _EZ_Texture構造体
 /// @param slot テクスチャスロット (0, 1, 2...)
 void _EZ_BindTexture(_EZ_Texture *texture, unsigned int slot);
