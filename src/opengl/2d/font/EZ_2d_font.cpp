@@ -19,6 +19,17 @@ using namespace std;
 static FT_Library g_ft_library = nullptr;
 static bool g_ft_initialized = false;
 
+// 不正なUTF-8シーケンスをスキップするヘルパー関数
+static void skip_invalid_utf8_sequence(const char **text)
+{
+    (*text)++;
+    while (**text != 0 && (((unsigned char)**text & 0xC0) == 0x80))
+    {
+        // 継続バイトをスキップ
+        (*text)++;
+    }
+}
+
 // UTF-8文字列から次の1文字のコードポイントを取得
 uint32_t _EZ_2D_GetNextUTF8Char(const char **text)
 {
@@ -59,12 +70,7 @@ uint32_t _EZ_2D_GetNextUTF8Char(const char **text)
         // 不正なUTF-8シーケンス
         // 継続バイト(0x80-0xBF)または無効な開始バイト(0xF8以上)の場合、
         // 次の有効なUTF-8シーケンス開始位置までスキップ
-        (*text)++;
-        while (**text != 0 && (((unsigned char)**text & 0xC0) == 0x80))
-        {
-            // 継続バイトをスキップ
-            (*text)++;
-        }
+        skip_invalid_utf8_sequence(text);
         return 0xFFFD;  // 置換文字
     }
 
@@ -75,12 +81,7 @@ uint32_t _EZ_2D_GetNextUTF8Char(const char **text)
         {
             // 不正なUTF-8シーケンス（継続バイトが期待される位置に無効なバイト）
             // 次の有効なUTF-8シーケンス開始位置までスキップ
-            (*text)++;
-            while (**text != 0 && (((unsigned char)**text & 0xC0) == 0x80))
-            {
-                // 継続バイトをスキップ
-                (*text)++;
-            }
+            skip_invalid_utf8_sequence(text);
             return 0xFFFD;
         }
         codepoint = (codepoint << 6) | (bytes[i] & 0x3F);
