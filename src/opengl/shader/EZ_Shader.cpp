@@ -79,7 +79,7 @@ EZ_Shader EZ_CreateShader()
     const char *vertex_shader_code = DEFAULT_VERTEX_SHADER;
     const char *fragment_shader_code = DEFAULT_FRAGMENT_SHADER;
 
-    EZ_Shader shader = EZ_CreateCustomShader(vertex_shader_code, fragment_shader_code);
+    EZ_Shader shader = EZ_CreateShaderFromSource(vertex_shader_code, fragment_shader_code);
     return shader;
 }
 
@@ -129,7 +129,13 @@ EZ_Shader EZ_CreateCustomShader(const char *vertex_file_path, const char *fragme
     const char *vertex_shader_code = vertex_shader_source.c_str();
     const char *fragment_shader_code = fragment_shader_source.c_str();
 
-    // MARK: Compile
+    return EZ_CreateShaderFromSource(vertex_shader_code, fragment_shader_code);
+}
+
+EZ_Shader EZ_CreateShaderFromSource(const char *vertex_shader_code,
+                                    const char *fragment_shader_code)
+{
+    auto shader = std::make_shared<_EZ_Shader>();
 
     unsigned int vertex_shader;
     unsigned int fragment_shader;
