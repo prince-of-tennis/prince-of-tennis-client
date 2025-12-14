@@ -1,3 +1,5 @@
+#include "EZ_Model.hpp"
+
 #include <SDL2/SDL.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -5,7 +7,6 @@
 #include <assimp/Importer.hpp>
 #include <vector>
 
-#include "EZ_Model.hpp"
 #include "glad/glad.h"
 #include "util/log.hpp"
 

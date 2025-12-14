@@ -2,6 +2,7 @@
 
 #include "core/context.hpp"
 #include "network/network.hpp"
+#include "opengl/2d/EZ_2d.h"
 #include "opengl/camera/EZ_Camera.hpp"
 #include "opengl/light/EZ_Light.hpp"
 #include "opengl/object/EZ_Object.hpp"
@@ -17,6 +18,10 @@ struct GameScene
     Context *context;
 
     UniquePtr<Network> network;
+
+    // 2D描画用
+    EZ_2D_Font font;
+    EZ_2D_Image test_image;
 };
 
 bool game_scene_init(GameScene *scene);

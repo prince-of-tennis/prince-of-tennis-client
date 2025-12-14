@@ -10,7 +10,7 @@
 
 using namespace std;
 
-struct OpenGL
+struct EasyGL
 {
     SDL_GLContext context;
 };
@@ -19,4 +19,4 @@ struct OpenGL
 /// @param gl OpenGL
 /// @param context Context
 /// @return 成功したか
-bool opengl_init(OpenGL *gl, Context *context);
+bool EZ_Init(EasyGL *gl, Context *context);

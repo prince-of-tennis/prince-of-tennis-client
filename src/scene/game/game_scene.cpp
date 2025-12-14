@@ -6,6 +6,7 @@
 
 #include "glad/glad.h"
 #include "network/network.hpp"
+#include "opengl/2d/EZ_2d.h"
 #include "util/log.hpp"
 
 bool game_scene_init(GameScene *scene)
@@ -13,7 +14,7 @@ bool game_scene_init(GameScene *scene)
     LOG_DEBUG("GameScene初期化開始");
 
     // シェーダー初期化
-    scene->shader = EZ_CreateShader("shader/simple.vert", "shader/simple.frag");
+    scene->shader = EZ_CreateShader();
     if (scene->shader == nullptr)
     {
         LOG_ERROR("シェーダーの作成に失敗しました");
@@ -48,6 +49,20 @@ bool game_scene_init(GameScene *scene)
         return false;
     }
 
+    // フォントの読み込み（オプション）
+    scene->font = EZ_2D_CreateFont("assets/fonts/font.otf", 48);
+    if (!scene->font)
+    {
+        LOG_WARN("フォントの読み込みに失敗しました。テキスト描画は無効化されます。");
+    }
+
+    // 画像の読み込み（オプション）
+    scene->test_image = EZ_2D_CreateImage("img/screen.jpg");
+    if (!scene->test_image)
+    {
+        LOG_WARN("画像の読み込みに失敗しました。");
+    }
+
     LOG_SUCCESS("GameScene初期化完了");
     return true;
 }
@@ -77,4 +92,13 @@ void game_scene_draw(GameScene *scene)
     {
         LOG_ERROR("描画対象のオブジェクトがnullです");
     }
+
+    // 2D描画テスト
+    EZ_2D_DrawRect(50, 50, 200, 100, 0.0f, 1.0f, 0.0f, 0.8f);  // 緑の半透明矩形
+    EZ_2D_DrawCircle(400, 300, 50, 1.0f, 0.0f, 0.0f, 1.0f);    // 赤い円
+    EZ_2D_DrawText(scene->font, 100, 200, "Hello, EZ_2D!", 32, 1.0f, 1.0f, 1.0f,
+                   1.0f);                                                        // 白いテキスト
+    EZ_2D_DrawImage(scene->test_image, 300, 150, 0, 0, 1.0f, 1.0f, 1.0f, 1.0f);  // 元のサイズで描画
+    EZ_2D_DrawImage(scene->test_image, 500, 150, 100, 100, 1.0f, 1.0f, 1.0f,
+                    0.5f);  // 100x100にリサイズ、半透明
 }

@@ -11,7 +11,146 @@
 #include "opengl/texture/EZ_Texture.hpp"
 #include "util/log.hpp"
 
-EZ_Shader EZ_CreateShader(const char *vertex_file_path, const char *fragment_file_path)
+// デフォルトの頂点シェーダー
+static const char *DEFAULT_VERTEX_SHADER = R"(
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec2 aTexCoord;
+layout (location = 2) in vec3 aNormal;
+
+out vec2 TexCoord;
+out vec3 Normal;
+out vec3 FragPos;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    FragPos = vec3(model * vec4(aPos, 1.0));
+    Normal = mat3(transpose(inverse(model))) * aNormal;
+    TexCoord = aTexCoord;
+
+    gl_Position = projection * view * vec4(FragPos, 1.0);
+}
+)";
+
+// デフォルトのフラグメントシェーダー
+static const char *DEFAULT_FRAGMENT_SHADER = R"(
+#version 330 core
+out vec4 FragColor;
+
+in vec2 TexCoord;
+in vec3 Normal;
+in vec3 FragPos;
+
+uniform sampler2D texture1;
+uniform vec3 lightPos;
+uniform vec3 lightColor;
+uniform vec3 viewPos;
+
+void main()
+{
+    // Ambient
+    float ambientStrength = 0.3;
+    vec3 ambient = ambientStrength * lightColor;
+
+    // Diffuse
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(lightPos - FragPos);
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = diff * lightColor;
+
+    // Specular
+    float specularStrength = 0.5;
+    vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+    vec3 specular = specularStrength * spec * lightColor;
+
+    vec3 result = (ambient + diffuse + specular) * texture(texture1, TexCoord).rgb;
+    FragColor = vec4(result, 1.0);
+}
+)";
+
+EZ_Shader EZ_CreateShader()
+{
+    auto shader = std::make_shared<_EZ_Shader>();
+
+    const char *vertex_shader_code = DEFAULT_VERTEX_SHADER;
+    const char *fragment_shader_code = DEFAULT_FRAGMENT_SHADER;
+
+    // MARK: Compile
+
+    unsigned int vertex_shader;
+    unsigned int fragment_shader;
+    int success;
+    char infoLog[512];
+
+    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex_shader, 1, &vertex_shader_code, NULL);
+    glCompileShader(vertex_shader);
+
+    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(vertex_shader, 512, NULL, infoLog);
+        LOG_ERROR("Vertex: " << infoLog);
+        return nullptr;
+    }
+
+    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment_shader, 1, &fragment_shader_code, NULL);
+    glCompileShader(fragment_shader);
+
+    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(fragment_shader, 512, NULL, infoLog);
+        LOG_ERROR("Shader: " << infoLog);
+        return nullptr;
+    }
+
+    unsigned int shader_program;
+    shader_program = glCreateProgram();
+    glAttachShader(shader_program, vertex_shader);
+    glAttachShader(shader_program, fragment_shader);
+
+    glLinkProgram(shader_program);
+
+    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(fragment_shader, 512, NULL, infoLog);
+        LOG_ERROR("Shader Program Linking Failed: " << infoLog);
+        return nullptr;
+    }
+
+    glDeleteShader(vertex_shader);
+    glDeleteShader(fragment_shader);
+
+    shader->program = shader_program;
+    shader->model_loc = glGetUniformLocation(shader_program, "model");
+    shader->view_loc = glGetUniformLocation(shader_program, "view");
+    shader->proj_loc = glGetUniformLocation(shader_program, "projection");
+
+    shader->light_loc = glGetUniformLocation(shader_program, "lightPos");
+    shader->light_color_loc = glGetUniformLocation(shader_program, "lightColor");
+    shader->view_pos_loc = glGetUniformLocation(shader_program, "viewPos");
+
+    if (shader->model_loc == -1 || shader->view_loc == -1 || shader->proj_loc == -1 ||
+        shader->light_loc == -1 || shader->light_color_loc == -1 || shader->view_pos_loc == -1)
+    {
+        LOG_ERROR("uniform variable not found");
+        return nullptr;
+    }
+
+    LOG_SUCCESS("デフォルトシェーダー初期化完了: program=" << shader->program);
+    return shader;
+}
+
+EZ_Shader EZ_CreateCustomShader(const char *vertex_file_path, const char *fragment_file_path)
 {
     auto shader = std::make_shared<_EZ_Shader>();
 

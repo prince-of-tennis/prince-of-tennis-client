@@ -7,55 +7,59 @@
 
 EZ_Object EZ_CreateObject(const char *model_file, const char *texture_file)
 {
-    EZ_Object obj = make_shared<_EZ_Object>();
-
-    obj->model = EZ_CreateModel(model_file);
-    if (!obj->model)
+    EZ_Model model = EZ_CreateModel(model_file);
+    if (!model)
     {
         LOG_ERROR("モデルの初期化に失敗しました: " << model_file);
         return nullptr;
     }
 
-    obj->texture = EZ_CreateTexture(texture_file);
-    if (!obj->texture)
+    EZ_Texture texture = EZ_CreateTexture(texture_file);
+    if (!texture)
     {
         LOG_ERROR("テクスチャの初期化に失敗しました: " << texture_file);
         return nullptr;
     }
 
-    obj->transform.position = glm::vec3(0.0f, 0.0f, 0.0f);
-    obj->transform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-    obj->transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
-    obj->is_active = true;
+    EZ_Object object = EZ_CreateObjectFromModelTexture(model, texture);
+    if (!object)
+    {
+        LOG_ERROR("EZ_Objectの作成に失敗しました");
+        _EZ_DestroyModel(model.get());
+        _EZ_DestroyTexture(texture.get());
+        return nullptr;
+    }
 
-    LOG_SUCCESS("OpenGLObject作成完了");
-    return obj;
+    LOG_SUCCESS("EZ_Object作成完了");
+    return object;
 }
 
 EZ_Object EZ_CreateObjectFromModel(EZ_Model model, const char *texture_file)
 {
-    EZ_Object obj = make_shared<_EZ_Object>();
     if (!model)
     {
         LOG_ERROR("モデルがNULLです");
         return nullptr;
     }
-    obj->model = model;
 
-    obj->texture = EZ_CreateTexture(texture_file);
-    if (!obj->texture)
+    EZ_Texture texture = EZ_CreateTexture(texture_file);
+    if (!texture)
     {
         LOG_ERROR("テクスチャの初期化に失敗しました: " << texture_file);
         return nullptr;
     }
 
-    obj->transform.position = glm::vec3(0.0f, 0.0f, 0.0f);
-    obj->transform.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-    obj->transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
-    obj->is_active = true;
+    EZ_Object object = EZ_CreateObjectFromModelTexture(model, texture);
+    if (!object)
+    {
+        LOG_ERROR("EZ_Objectの作成に失敗しました");
+        _EZ_DestroyModel(model.get());
+        _EZ_DestroyTexture(texture.get());
+        return nullptr;
+    }
 
     LOG_SUCCESS("OpenGLObject作成完了");
-    return obj;
+    return object;
 }
 
 EZ_Object EZ_CreateObjectFromModelTexture(EZ_Model model, EZ_Texture texture)

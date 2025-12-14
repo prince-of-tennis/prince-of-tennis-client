@@ -5,7 +5,7 @@
 #include "opengl/glad/glad.h"
 #include "util/log.hpp"
 
-bool opengl_init(OpenGL *gl, Context *context)
+bool EZ_Init(EasyGL *gl, Context *context)
 {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);

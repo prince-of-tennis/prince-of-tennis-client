@@ -3,12 +3,13 @@
 #include "common/player_input.h"
 #include "core/context.hpp"
 #include "joycon/joycon.hpp"
+#include "opengl/2d/EZ_2d.h"
 #include "opengl/EasyGL.hpp"
 #include "util/log.hpp"
 #include "window_manager/window_manager.hpp"
 
 static Context g_context;
-static OpenGL g_opengl;
+static EasyGL g_opengl;
 
 void context_init()
 {
@@ -42,12 +43,19 @@ bool looper_init(Looper *looper, eSceneType default_scene)
     g_context.window = get_window();
 
     // OpenGL初期化
-    if (!opengl_init(&g_opengl, &g_context))
+    if (!EZ_Init(&g_opengl, &g_context))
     {
         LOG_ERROR("OpenGLの初期化に失敗しました");
         return false;
     }
     LOG_SUCCESS("OpenGLを初期化しました");
+
+    // 2D描画システム初期化
+    if (!EZ_2D_Init(g_context.window_width, g_context.window_height))
+    {
+        LOG_ERROR("2D描画システムの初期化に失敗しました");
+        return false;
+    }
 
     // SceneManager初期化
     looper->scene_manager = make_unique<SceneManager>();
@@ -107,6 +115,7 @@ void loop(Looper *looper)
 void looper_fini(Looper *looper)
 {
     scene_manager_fini(looper->scene_manager);
+    _EZ_2D_Destroy();
     window_manager_fini();
     joycon_fini(&looper->joycon);
     SDL_Quit();

@@ -17,11 +17,15 @@ struct _EZ_Shader
 
 typedef std::shared_ptr<_EZ_Shader> EZ_Shader;
 
-/// @brief Shaderの作成
+/// @brief デフォルトShaderの作成
+/// @return 作成されたShader
+EZ_Shader EZ_CreateShader();
+
+/// @brief カスタムShaderの作成
 /// @param vertex_file_path .vertファイルのパス
 /// @param fragment_file_path .fragファイルのパス
 /// @return 作成されたShader
-EZ_Shader EZ_CreateShader(const char *vertex_file_path, const char *fragment_file_path);
+EZ_Shader EZ_CreateCustomShader(const char *vertex_file_path, const char *fragment_file_path);
 
 /// @brief Shaderの初期化
 /// @param shader OpenGLShader
