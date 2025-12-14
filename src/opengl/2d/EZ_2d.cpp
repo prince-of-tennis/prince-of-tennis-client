@@ -290,6 +290,9 @@ void _EZ_2D_Destroy()
     if (g_text_vao != 0) glDeleteVertexArrays(1, &g_text_vao);
     if (g_text_vbo != 0) glDeleteBuffers(1, &g_text_vbo);
 
+    // FreeTypeライブラリの解放
+    _EZ_2D_DestroyFreeType();
+
     LOG_SUCCESS("2D描画システム解放完了");
 }
 
