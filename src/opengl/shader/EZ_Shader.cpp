@@ -76,77 +76,10 @@ void main()
 
 EZ_Shader EZ_CreateShader()
 {
-    auto shader = std::make_shared<_EZ_Shader>();
-
     const char *vertex_shader_code = DEFAULT_VERTEX_SHADER;
     const char *fragment_shader_code = DEFAULT_FRAGMENT_SHADER;
 
-    // MARK: Compile
-
-    unsigned int vertex_shader;
-    unsigned int fragment_shader;
-    int success;
-    char infoLog[512];
-
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_code, NULL);
-    glCompileShader(vertex_shader);
-
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertex_shader, 512, NULL, infoLog);
-        LOG_ERROR("Vertex: " << infoLog);
-        return nullptr;
-    }
-
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_code, NULL);
-    glCompileShader(fragment_shader);
-
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragment_shader, 512, NULL, infoLog);
-        LOG_ERROR("Shader: " << infoLog);
-        return nullptr;
-    }
-
-    unsigned int shader_program;
-    shader_program = glCreateProgram();
-    glAttachShader(shader_program, vertex_shader);
-    glAttachShader(shader_program, fragment_shader);
-
-    glLinkProgram(shader_program);
-
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragment_shader, 512, NULL, infoLog);
-        LOG_ERROR("Shader Program Linking Failed: " << infoLog);
-        return nullptr;
-    }
-
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
-
-    shader->program = shader_program;
-    shader->model_loc = glGetUniformLocation(shader_program, "model");
-    shader->view_loc = glGetUniformLocation(shader_program, "view");
-    shader->proj_loc = glGetUniformLocation(shader_program, "projection");
-
-    shader->light_loc = glGetUniformLocation(shader_program, "lightPos");
-    shader->light_color_loc = glGetUniformLocation(shader_program, "lightColor");
-    shader->view_pos_loc = glGetUniformLocation(shader_program, "viewPos");
-
-    if (shader->model_loc == -1 || shader->view_loc == -1 || shader->proj_loc == -1 ||
-        shader->light_loc == -1 || shader->light_color_loc == -1 || shader->view_pos_loc == -1)
-    {
-        LOG_ERROR("uniform variable not found");
-        return nullptr;
-    }
-
-    LOG_SUCCESS("デフォルトシェーダー初期化完了: program=" << shader->program);
+    EZ_Shader shader = EZ_CreateCustomShader(vertex_shader_code, fragment_shader_code);
     return shader;
 }
 
