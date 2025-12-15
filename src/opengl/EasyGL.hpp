@@ -22,7 +22,7 @@ struct EasyGL
 /// @return 成功したか
 bool EZ_Init(EasyGL *gl, Context *context);
 
-/// @brief 背景色の設定
+/// @brief 背景色の設定と画面クリア
 /// @param r 赤成分 (0-255)
 /// @param g 緑成分 (0-255)
 /// @param b 青成分 (0-255)
