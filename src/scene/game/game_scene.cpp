@@ -7,6 +7,7 @@
 #include "glad/glad.h"
 #include "network/network.hpp"
 #include "opengl/2d/EZ_2d.h"
+#include "opengl/EasyGL.hpp"
 #include "util/log.hpp"
 
 bool game_scene_init(GameScene *scene)
@@ -116,9 +117,8 @@ bool game_scene_update(GameScene *scene)
 void game_scene_draw(GameScene *scene)
 {
     // 画面クリア
-    glClearColor(scene->context->background_r, scene->context->background_g,
-                 scene->context->background_b, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    EZ_BackgroundClear(scene->context->background_r, scene->context->background_g,
+                       scene->context->background_b);
 
     // ボールの描画
     if (scene->ball_object)
