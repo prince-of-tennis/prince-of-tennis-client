@@ -76,6 +76,14 @@ bool network_handle_packet(Network *network, Packet packet)
             network->network_data_set.game_phase = game_phase;
             break;
 
+        case PACKET_TYPE_BALL_STATE:
+            Ball ball;
+            memcpy(&ball, packet.data, sizeof(Ball));
+            LOG_DEBUG("Ball受信: (" << ball.point.x << ", " << ball.point.y << ", " << ball.point.z
+                                    << ")");
+            network->network_data_set.ball = ball;
+            break;
+
         default:
             LOG_ERROR("不正な値が送信されました: " << packet.type);
             return false;
