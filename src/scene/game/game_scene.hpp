@@ -11,10 +11,7 @@
 #include "opengl/shader/EZ_Shader.hpp"
 #include "util/helper.hpp"
 
-enum
-{
-    PLAYER_MAX = 2
-};
+#define PLAYER_MAX 2
 
 struct GameScene
 {

@@ -25,8 +25,6 @@ EZ_Object EZ_CreateObject(const char *model_file, const char *texture_file)
     if (!object)
     {
         LOG_ERROR("EZ_Objectの作成に失敗しました");
-        _EZ_DestroyModel(model.get());
-        _EZ_DestroyTexture(texture.get());
         return nullptr;
     }
 
@@ -151,8 +149,7 @@ void EZ_DrawObject(EZ_Object object, EZ_Shader shader, EZ_Camera camera, EZ_Ligh
         return;
     }
 
-    _EZ_BindTexture(object->texture.get(), 0);
-    _EZ_DrawModel(object->model.get());
+    _EZ_DrawModel(object->model.get(), object->texture.get());
 }
 
 _EZ_Object::~_EZ_Object()
