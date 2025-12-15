@@ -9,6 +9,7 @@
 #include "opengl/object/EZ_Object.hpp"
 #include "opengl/shader/EZ_Shader.hpp"
 #include "util/helper.hpp"
+#include "common/player_input.h"
 
 struct GameScene
 {
@@ -30,6 +31,6 @@ struct GameScene
 
 bool game_scene_init(GameScene *scene);
 
-bool game_scene_update(GameScene *scene);
+bool game_scene_update(GameScene *scene, PlayerInput player_input);
 
 void game_scene_draw(GameScene *scene);

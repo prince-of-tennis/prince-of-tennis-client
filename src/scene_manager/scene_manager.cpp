@@ -33,7 +33,7 @@ static bool init_scene(unique_ptr<SceneManager> &mgr)
     }
 }
 
-SDL_bool scene_update(unique_ptr<SceneManager> &mgr)
+SDL_bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput player_input)
 {
     // MARK: メイン処理
     // ここにそれぞれのシーンで毎回実行する処理を記述する
@@ -47,7 +47,7 @@ SDL_bool scene_update(unique_ptr<SceneManager> &mgr)
             return SDL_TRUE;
 
         case SCENE_GAME:
-            if (!game_scene_update(&mgr->game_scene))
+            if (!game_scene_update(&mgr->game_scene, player_input))
             {
                 return SDL_FALSE;
             }
