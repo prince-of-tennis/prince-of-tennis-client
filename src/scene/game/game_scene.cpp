@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "game_scene.hpp"
 #include "glad/glad.h"
 #include "network/network.hpp"
 #include "opengl/2d/EZ_2d.h"

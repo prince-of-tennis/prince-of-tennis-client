@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "glad/glad.h"
+#include "opengl/texture/EZ_Texture.hpp"
 #include "util/log.hpp"
 
 using namespace std;
@@ -131,10 +132,16 @@ void _EZ_DestroyModel(_EZ_Model *model)
     model->meshes.clear();
 }
 
-void _EZ_DrawModel(_EZ_Model *model)
+void _EZ_DrawModel(_EZ_Model *model, _EZ_Texture *texture)
 {
     for (auto mesh : model->meshes)
     {
+        // 各メッシュ描画前にテクスチャをバインド
+        if (texture)
+        {
+            _EZ_BindTexture(texture, 0);
+        }
+
         glBindVertexArray(mesh.vao);
         glDrawElements(GL_TRIANGLES, mesh.index_count, GL_UNSIGNED_INT, 0);
     }
