@@ -19,6 +19,7 @@ static const Uint32 TARGET_FRAME_TIME = 1000 / TARGET_FPS;  // ミリ秒
 static Uint32 g_frame_start = 0;
 
 #ifdef DEBUG
+// 将来的にFPS計測機能を実装する際に使用予定の変数
 static Uint32 g_fps_timer = 0;
 #endif
 
