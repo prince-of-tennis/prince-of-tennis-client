@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common/ball.h"
+#include "common/player.h"
 #include "core/context.hpp"
 #include "network/network.hpp"
 #include "opengl/2d/EZ_2d.h"
@@ -9,6 +10,11 @@
 #include "opengl/object/EZ_Object.hpp"
 #include "opengl/shader/EZ_Shader.hpp"
 #include "util/helper.hpp"
+
+enum
+{
+    PLAYER_MAX = 2
+};
 
 struct GameScene
 {
@@ -22,6 +28,10 @@ struct GameScene
     // ボール
     EZ_Object ball_object;
     Ball ball_data;
+
+    // プレイヤー
+    EZ_Object player_objects[PLAYER_MAX];
+    Player player_data[PLAYER_MAX];
 
     // 2D描画用
     EZ_2D_Font font;
