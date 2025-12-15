@@ -200,6 +200,14 @@ EZ_Shader EZ_CreateShaderFromSource(const char *vertex_shader_code,
         return nullptr;
     }
 
+    // テクスチャユニフォームを設定
+    glUseProgram(shader_program);
+    GLint texture_loc = glGetUniformLocation(shader_program, "texture1");
+    if (texture_loc != -1)
+    {
+        glUniform1i(texture_loc, 0);  // テクスチャユニット0を使用
+    }
+
     LOG_SUCCESS("シェーダー初期化完了: program=" << shader->program);
     return shader;
 }

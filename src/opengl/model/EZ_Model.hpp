@@ -27,4 +27,6 @@ EZ_Model EZ_CreateModel(string model_file_path);
 void _EZ_DestroyModel(_EZ_Model *model);
 
 /// @brief モデルの描画
-void _EZ_DrawModel(_EZ_Model *model);
+/// @param model モデル
+/// @param texture テクスチャ（オプション）
+void _EZ_DrawModel(_EZ_Model *model, struct _EZ_Texture *texture = nullptr);

@@ -29,9 +29,9 @@ void context_init()
     g_context.window_height = 640;
     g_context.camera_position = glm::vec3(0.0f, 30.0f, 90.0f);
     g_context.camera_target = glm::vec3(0.0f, 0.0f, 0.0f);
-    g_context.background_r = 0.2f;
-    g_context.background_g = 0.3f;
-    g_context.background_b = 0.3f;
+    g_context.background_r = 51;
+    g_context.background_g = 76;
+    g_context.background_b = 76;
 
     g_context.network_host = "localhost";
     g_context.network_port = 5000;
