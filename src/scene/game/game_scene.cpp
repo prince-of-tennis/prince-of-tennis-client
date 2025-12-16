@@ -90,7 +90,7 @@ bool game_scene_init(GameScene *scene)
     return true;
 }
 
-bool game_scene_update(GameScene *scene, PlayerInput player_input)
+bool game_scene_update(GameScene *scene, PlayerInput *player_input)
 {
     if (!network_listen_to_server(scene->network.get()))
     {

@@ -29,7 +29,7 @@ void scene_manager_fini(unique_ptr<SceneManager> &mgr);
 
 /// @brief シーンを指定した実行する
 /// @return ループするか(SDL_FALSEの時に終了)
-SDL_bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput player_input);
+SDL_bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput *player_input);
 
 /// @brief シーンを変更
 /// @param scene シーン

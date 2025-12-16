@@ -138,7 +138,7 @@ void loop(Looper *looper)
         if (is_running)
         {
             // シーン更新
-            is_running = scene_update(looper->scene_manager, player_input);
+            is_running = scene_update(looper->scene_manager, &player_input);
 
             // バッファスワップ
             SDL_GL_SwapWindow(g_context.window);

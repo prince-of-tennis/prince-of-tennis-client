@@ -2,6 +2,7 @@
 
 #include "common/ball.h"
 #include "common/player.h"
+#include "common/player_input.h"
 #include "core/context.hpp"
 #include "network/network.hpp"
 #include "opengl/2d/EZ_2d.h"
@@ -10,7 +11,6 @@
 #include "opengl/object/EZ_Object.hpp"
 #include "opengl/shader/EZ_Shader.hpp"
 #include "util/helper.hpp"
-#include "common/player_input.h"
 
 #define PLAYER_MAX 2
 
@@ -38,6 +38,6 @@ struct GameScene
 
 bool game_scene_init(GameScene *scene);
 
-bool game_scene_update(GameScene *scene, PlayerInput player_input);
+bool game_scene_update(GameScene *scene, PlayerInput *player_input);
 
 void game_scene_draw(GameScene *scene);
