@@ -9,13 +9,13 @@
 bool joycon_init(Joycon *joycon)
 {
     joycon_err err = joycon_open(&joycon->joycon, JOYCON_R);
-    if (JOYCON_ERR_NONE != err)
+    if (err != JOYCON_ERR_NONE)
     {
-        LOG_ERROR("SDLの初期化に失敗しました: ");
+        LOG_ERROR("Joy-Conの初期化に失敗しました: " << err);
         return false;
     }
 
-    LOG_SUCCESS("Joyconの初期化に成功しました");
+    LOG_SUCCESS("Joy-Conの初期化に成功しました");
 
     return true;
 }
