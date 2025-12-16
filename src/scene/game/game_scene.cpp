@@ -1,7 +1,6 @@
 #include "game_scene.hpp"
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "glad/glad.h"
@@ -110,6 +109,13 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input)
         EZ_ObjectSetPosition(scene->player_objects[i], scene->player_data[i].point.x,
                              scene->player_data[i].point.y, scene->player_data[i].point.z);
     }
+
+    // Joy-Conのデータをサーバに送信
+    Packet joycon_packet;
+    joycon_packet.type = PACKET_TYPE_PLAYER_INPUT;
+    joycon_packet.size = sizeof(PlayerInput);
+    memcpy(joycon_packet.data, player_input, sizeof(PlayerInput));
+    network_send_to_server(scene->network.get(), joycon_packet);
 
     return true;
 }

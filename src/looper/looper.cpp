@@ -97,40 +97,42 @@ bool looper_init(Looper *looper, eSceneType default_scene)
         return false;
     }
 
-    if (!joycon_init(&looper->joycon)) return false;
+    // if (!joycon_init(&looper->joycon)) return false;
 
+    joycon_init(&looper->joycon);
     return true;
 }
 
 void loop(Looper *looper)
 {
-    SDL_bool is_running = SDL_TRUE;
+    bool is_running = true;
 
     while (is_running)
     {
         fps_frame_start();
 
-        PlayerInput player_input = get_joycon(&looper->joycon);
-        if (player_input.right)
-        {
-            LOG_DEBUG("右");
-        }
-        if (player_input.left)
-        {
-            LOG_DEBUG("左");
-        }
-        if (player_input.front)
-        {
-            LOG_DEBUG("後");
-        }
-        if (player_input.back)
-        {
-            LOG_DEBUG("前");
-        }
-        if (player_input.swing)
-        {
-            LOG_DEBUG("振る");
-        }
+        // PlayerInput player_input = get_joycon(&looper->joycon);
+        PlayerInput player_input = {true, false, false, false, false};
+        // if (player_input.right)
+        // {
+        //     LOG_DEBUG("右");
+        // }
+        // if (player_input.left)
+        // {
+        //     LOG_DEBUG("左");
+        // }
+        // if (player_input.front)
+        // {
+        //     LOG_DEBUG("後");
+        // }
+        // if (player_input.back)
+        // {
+        //     LOG_DEBUG("前");
+        // }
+        // if (player_input.swing)
+        // {
+        //     LOG_DEBUG("振る");
+        // }
 
         // イベント処理
         is_running = window_manager_update();
