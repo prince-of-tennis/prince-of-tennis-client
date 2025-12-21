@@ -33,7 +33,7 @@ static bool init_scene(unique_ptr<SceneManager> &mgr)
     }
 }
 
-SDL_bool scene_update(unique_ptr<SceneManager> &mgr)
+bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput *player_input)
 {
     // MARK: メイン処理
     // ここにそれぞれのシーンで毎回実行する処理を記述する
@@ -42,21 +42,21 @@ SDL_bool scene_update(unique_ptr<SceneManager> &mgr)
         case SCENE_TITLE:
             if (!scene_change(mgr, SCENE_GAME))
             {
-                return SDL_FALSE;
+                return false;
             }
-            return SDL_TRUE;
+            return true;
 
         case SCENE_GAME:
-            if (!game_scene_update(&mgr->game_scene))
+            if (!game_scene_update(&mgr->game_scene, player_input))
             {
-                return SDL_FALSE;
+                return false;
             }
             game_scene_draw(&mgr->game_scene);
-            return SDL_TRUE;
+            return true;
 
         default:
             LOG_ERROR("不正なシーンが渡されています");
-            return SDL_FALSE;
+            return false;
     }
 }
 

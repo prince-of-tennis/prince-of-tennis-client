@@ -4,6 +4,7 @@
 
 #include <memory>
 
+#include "common/player_input.h"
 #include "core/context.hpp"
 #include "scene/game/game_scene.hpp"
 #include "scene_type.hpp"
@@ -15,6 +16,7 @@ struct SceneManager
     eSceneType current_scene;
     Context *context;
     GameScene game_scene;
+    PlayerInput player_input;
 };
 
 /// @brief scene_managerの初期化
@@ -27,7 +29,7 @@ void scene_manager_fini(unique_ptr<SceneManager> &mgr);
 
 /// @brief シーンを指定した実行する
 /// @return ループするか(SDL_FALSEの時に終了)
-SDL_bool scene_update(unique_ptr<SceneManager> &mgr);
+bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput *player_input);
 
 /// @brief シーンを変更
 /// @param scene シーン

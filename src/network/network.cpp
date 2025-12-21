@@ -5,6 +5,8 @@
 
 bool network_init(Network *network, Context *context)
 {
+    network->context = context;
+
     if (SDLNet_Init() == -1)
     {
         LOG_ERROR("SDLNetの初期化に失敗しました: " << SDLNet_GetError());
@@ -40,17 +42,10 @@ bool network_init(Network *network, Context *context)
 
 bool network_listen_to_server(Network *network)
 {
-    int num_ready_socket = SDLNet_CheckSockets(network->socket_set, 0);
-    if (num_ready_socket == -1)
-    {
-        LOG_ERROR("ソケットエラー");
-        return false;
-    }
-
-    if (num_ready_socket > 0)
+    while (SDLNet_CheckSockets(network->socket_set, 0) > 0)
     {
         Packet packet;
-        if (SDLNet_TCP_Recv(network->socket, &packet, sizeof(Packet)) >= sizeof(Packet))
+        if (SDLNet_TCP_Recv(network->socket, &packet, sizeof(Packet)) > 0)
         {
             // パケットを処理
             network_handle_packet(network, packet);
@@ -69,6 +64,15 @@ bool network_handle_packet(Network *network, Packet packet)
 {
     switch (packet.type)
     {
+        case PACKET_TYPE_SET_PLAYER_ID:
+        {
+            int player_id;
+            memcpy(&player_id, packet.data, sizeof(int));
+            network->context->player_id = player_id;
+            LOG_SUCCESS("プレイヤーID設定: " << player_id);
+            break;
+        }
+
         case PACKET_TYPE_GAME_PHASE:
             GamePhase game_phase;
             memcpy(&game_phase, packet.data, sizeof(GamePhase));
@@ -79,22 +83,30 @@ bool network_handle_packet(Network *network, Packet packet)
         case PACKET_TYPE_BALL_STATE:
             Ball ball;
             memcpy(&ball, packet.data, sizeof(Ball));
-            LOG_DEBUG("Ball受信: (" << ball.point.x << ", " << ball.point.y << ", " << ball.point.z
-                                    << ")");
             network->network_data_set.ball = ball;
             break;
 
-        default:
-            LOG_ERROR("不正な値が送信されました: " << packet.type);
-            return false;
+        case PACKET_TYPE_PLAYER_STATE:
+            Player player;
+            memcpy(&player, packet.data, sizeof(Player));
+
+            // player_idの範囲チェック (0-1)
+            if (player.player_id < 0 || player.player_id >= 2)
+            {
+                LOG_ERROR("不正なplayer_idを受信: " << player.player_id);
+                return false;
+            }
+            // プレイヤーデータを更新
+            network->network_data_set.players[player.player_id] = player;
+            break;
     }
 
     return true;
 }
 
-bool network_send_to_server(Network *network, Packet packet)
+bool network_send_to_server(Network *network, Packet *packet)
 {
-    if (SDLNet_TCP_Send(network->socket, &packet, sizeof(Packet)) < sizeof(Packet))
+    if (SDLNet_TCP_Send(network->socket, packet, sizeof(Packet)) < sizeof(Packet))
     {
         LOG_ERROR("サーバーへの送信に失敗しました: " << SDLNet_GetError());
         return false;
