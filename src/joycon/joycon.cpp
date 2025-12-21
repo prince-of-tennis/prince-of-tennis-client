@@ -44,12 +44,12 @@ PlayerInput get_joycon(Joycon *joycon, int player_id)
 
     if (joycon->joycon.stick.y < -TRIGGER_THRESHOLD)
     {
-        player_input.back = true;
+        player_input.front = true;
     }
 
     if (joycon->joycon.stick.y > TRIGGER_THRESHOLD)
     {
-        player_input.front = true;
+        player_input.back = true;
     }
 
     if (joycon->joycon.axis[0].acc_z > 20)

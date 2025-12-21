@@ -23,7 +23,7 @@ constexpr float CAMERA_POS_X = -0.015194f;
 constexpr float CAMERA_POS_Y = 13.8167f;
 constexpr float CAMERA_POS_Z = 67.5868f;
 constexpr float CAMERA_TARGET_X = 0.0f;
-constexpr float CAMERA_TARGET_Y = 0.0f;
+constexpr float CAMERA_TARGET_Y = 5.0f;
 constexpr float CAMERA_TARGET_Z = 0.0f;
 
 // プレイヤーのローカル移動速度
