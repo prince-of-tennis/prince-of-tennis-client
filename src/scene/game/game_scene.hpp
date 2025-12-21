@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/GameScore.h"
 #include "common/ball.h"
 #include "common/player.h"
 #include "common/player_input.h"
@@ -23,7 +24,7 @@ constexpr float CAMERA_POS_X = -0.015194f;
 constexpr float CAMERA_POS_Y = 13.8167f;
 constexpr float CAMERA_POS_Z = 67.5868f;
 constexpr float CAMERA_TARGET_X = 0.0f;
-constexpr float CAMERA_TARGET_Y = 0.0f;
+constexpr float CAMERA_TARGET_Y = 5.0f;
 constexpr float CAMERA_TARGET_Z = 0.0f;
 
 // プレイヤーのローカル移動速度
@@ -57,6 +58,9 @@ struct GameScene
     // 2D描画用
     EZ_2D_Font font;
     EZ_2D_Image test_image;
+
+    // スコアデータ
+    GameScore game_score;
 };
 
 bool game_scene_init(GameScene *scene);
@@ -64,3 +68,6 @@ bool game_scene_init(GameScene *scene);
 bool game_scene_update(GameScene *scene, PlayerInput *player_input);
 
 void game_scene_draw(GameScene *scene);
+
+// スコア描画用ヘルパー関数
+void draw_score(GameScene *scene);

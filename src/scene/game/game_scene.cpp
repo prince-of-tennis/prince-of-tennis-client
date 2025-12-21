@@ -90,11 +90,9 @@ bool game_scene_init(GameScene *scene)
 
     // サーバーからプレイヤーIDを受信（ゲーム開始時）
     LOG_DEBUG("プレイヤーID受信待機中...");
-    bool received_player_id = false;
-    Uint32 timeout_start = SDL_GetTicks();
     const Uint32 TIMEOUT_MS = 5000;  // 5秒タイムアウト
 
-    while (!received_player_id && (SDL_GetTicks() - timeout_start < TIMEOUT_MS))
+    while (true)
     {
         if (!network_listen_to_server(scene->network.get()))
         {
@@ -105,21 +103,27 @@ bool game_scene_init(GameScene *scene)
         // プレイヤーIDが設定されたか確認
         if (scene->context->player_id != -1)
         {
-            received_player_id = true;
             LOG_SUCCESS("プレイヤーID受信完了: " << scene->context->player_id);
+            break;
         }
 
         SDL_Delay(10);  // CPU負荷軽減
     }
 
-    // if (!received_player_id)
-    // {
-    //     LOG_ERROR("プレイヤーID受信タイムアウト");
-    //     return false;
-    // }
-
     // サーバー同期カウンターを初期化
     scene->server_sync_counter = 0;
+
+    // フォントの初期化
+    scene->font = EZ_2D_CreateFont("fonts/font.otf", 48);
+    if (scene->font == nullptr)
+    {
+        LOG_ERROR("フォントの作成に失敗しました");
+        return false;
+    }
+    LOG_SUCCESS("フォント初期化完了");
+
+    // スコアの初期化
+    memset(&scene->game_score, 0, sizeof(GameScore));
 
     // 前フレームの入力を初期化
     LOG_SUCCESS("GameScene初期化完了");
@@ -140,6 +144,9 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input)
     EZ_ObjectSetPosition(scene->ball_object, scene->ball_data.point.x, scene->ball_data.point.y,
                          scene->ball_data.point.z);
 
+    // スコアデータの更新
+    scene->game_score = scene->network->network_data_set.game_score;
+
     // サーバー同期カウンターをインクリメント
     scene->server_sync_counter++;
     bool should_sync_with_server = (scene->server_sync_counter >= SERVER_SYNC_INTERVAL);
@@ -148,54 +155,11 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input)
         scene->server_sync_counter = 0;
     }
 
-    // プレイヤーの更新処理
-    int my_player_id = scene->context->player_id;
-
     for (int i = 0; i < PLAYER_MAX; i++)
     {
-        if (i == my_player_id)
-        {
-            // 自分のプレイヤー：ローカルで即座に移動
-            // サーバーから受信したデータを保存（補正用）
-            Player server_player = scene->network->network_data_set.players[i];
-            // 定期的にサーバー座標で補正
-            // if (should_sync_with_server)
-            // {
-            //     scene->player_data[i] = server_player;
-            //     LOG_DEBUG("プレイヤー" << i << "をサーバー座標で補正: (" << server_player.point.x
-            //                            << ", " << server_player.point.y << ", "
-            //                            << server_player.point.z << ")");
-            // }
-
-            // Joy-Con入力でローカル移動
-            if (player_input->left)
-            {
-                scene->player_data[i].point.x -= PLAYER_MOVE_SPEED;
-            }
-            if (player_input->right)
-            {
-                scene->player_data[i].point.x += PLAYER_MOVE_SPEED;
-            }
-            if (player_input->front)
-            {
-                scene->player_data[i].point.z -= PLAYER_MOVE_SPEED;
-            }
-            if (player_input->back)
-            {
-                scene->player_data[i].point.z += PLAYER_MOVE_SPEED;
-            }
-
-            // オブジェクトの座標を更新
-            EZ_ObjectSetPosition(scene->player_objects[i], scene->player_data[i].point.x,
-                                 scene->player_data[i].point.y, scene->player_data[i].point.z);
-        }
-        else
-        {
-            // 他のプレイヤー：サーバーからの座標をそのまま使用
-            scene->player_data[i] = scene->network->network_data_set.players[i];
-            EZ_ObjectSetPosition(scene->player_objects[i], scene->player_data[i].point.x,
-                                 scene->player_data[i].point.y, scene->player_data[i].point.z);
-        }
+        scene->player_data[i] = scene->network->network_data_set.players[i];
+        EZ_ObjectSetPosition(scene->player_objects[i], scene->player_data[i].point.x,
+                             scene->player_data[i].point.y, scene->player_data[i].point.z);
     }
 
     // Joy-Conのデータが変化した場合のみサーバに送信
@@ -232,4 +196,56 @@ void game_scene_draw(GameScene *scene)
             EZ_DrawObject(scene->player_objects[i], scene->shader, scene->camera, scene->light);
         }
     }
+
+    // スコア表示
+    draw_score(scene);
+}
+
+// スコア表示関数
+void draw_score(GameScene *scene)
+{
+    int my_player_id = scene->context->player_id;
+    int opponent_id = (my_player_id == 0) ? 1 : 0;
+
+    NetworkDataSet data_set = scene->network->network_data_set;
+
+    // 自分のポイント
+    int my_points = (my_player_id == 0) ? data_set.game_score.current_game_p1
+                                        : data_set.game_score.current_game_p2;
+
+    // 相手のポイント
+    int opponent_points = (opponent_id == 0) ? data_set.game_score.current_game_p1
+                                             : data_set.game_score.current_game_p2;
+
+    // デバッグ: スコアデータを確認
+    static int debug_counter = 0;
+    if (debug_counter % 60 == 0)  // 60フレームごとに1回出力
+    {
+        LOG_DEBUG("スコア表示 - 自分:" << my_points << " 相手:" << opponent_points
+                                       << " player_id:" << my_player_id
+                                       << " font:" << (scene->font != nullptr ? "OK" : "NULL"));
+    }
+    debug_counter++;
+
+    // フォントがない場合は描画しない
+    if (scene->font == nullptr)
+    {
+        return;
+    }
+
+    // スコア文字列を作成（例: "15 : 30"）
+    char score_text[64];
+    snprintf(score_text, sizeof(score_text), "%d : %d", my_points, opponent_points);
+
+    // 画面中央上部に表示
+    float screen_width = scene->context->window_width;
+    float x = screen_width / 2.0f - 100.0f;  // 中央寄せ
+    float y = 50.0f;
+    float size = 60.0f;
+
+    // 色設定（白）
+    float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
+
+    // スコアを描画
+    EZ_2D_DrawText(scene->font, x, y, score_text, size, r, g, b, a);
 }
