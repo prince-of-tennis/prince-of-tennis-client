@@ -99,6 +99,12 @@ bool network_handle_packet(Network *network, Packet packet)
             // プレイヤーデータを更新
             network->network_data_set.players[player.player_id] = player;
             break;
+
+        case PACKET_TYPE_SCORE_UPDATE:
+            GameScore game_score;
+            memcpy(&game_score, packet.data, sizeof(GameScore));
+            network->network_data_set.game_score = game_score;
+            break;
     }
 
     return true;
