@@ -21,4 +21,5 @@ struct Context
     // Network関連
     string network_host;
     Uint16 network_port;
+    int player_id = -1;  // プレイヤーID（未設定は-1）
 };

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="On explicit save action" autoUploadExternalChanges="true">
     <serverData>
       <paths name="vmware (93b6c857-8db4-4a80-b6fd-972cc003609f)">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/tmp.p0P8SE3XMk/prince-of-tennis-client" local="$PROJECT_DIR$" />
+            <mapping deploy="/home/vmware/Project/soft/prince-of-tennis/prince-of-tennis-client" local="$PROJECT_DIR$" />
           </mappings>
           <excludedPaths>
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-vmware" />
@@ -16,5 +16,6 @@
         </serverdata>
       </paths>
     </serverData>
+    <option name="myAutoUpload" value="ON_EXPLICIT_SAVE" />
   </component>
 </project>

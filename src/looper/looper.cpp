@@ -109,29 +109,16 @@ void loop(Looper *looper)
 
     while (is_running)
     {
-        fps_frame_start();
+        // fps_frame_start();
 
-        // PlayerInput player_input = get_joycon(&looper->joycon);
-        PlayerInput player_input = {true, false, false, false, false};
-        // if (player_input.right)
+        PlayerInput player_input = get_joycon(&looper->joycon, g_context.player_id);
+        // if (player_input.left || player_input.right || player_input.front || player_input.back ||
+        //     player_input.swing)
         // {
-        //     LOG_DEBUG("右");
-        // }
-        // if (player_input.left)
-        // {
-        //     LOG_DEBUG("左");
-        // }
-        // if (player_input.front)
-        // {
-        //     LOG_DEBUG("後");
-        // }
-        // if (player_input.back)
-        // {
-        //     LOG_DEBUG("前");
-        // }
-        // if (player_input.swing)
-        // {
-        //     LOG_DEBUG("振る");
+        //     LOG_DEBUG("プレイヤー入力: left="
+        //               << player_input.left << ", right=" << player_input.right
+        //               << ", front=" << player_input.front << ", back=" << player_input.back
+        //               << ", swing=" << player_input.swing);
         // }
 
         // イベント処理
@@ -146,7 +133,7 @@ void loop(Looper *looper)
             SDL_GL_SwapWindow(g_context.window);
         }
 
-        fps_frame_end();
+        // fps_frame_end();
     }
 }
 

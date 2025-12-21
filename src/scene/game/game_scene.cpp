@@ -74,6 +74,9 @@ bool game_scene_init(GameScene *scene)
     // カメラ初期化
     scene->camera = EZ_CreateCamera(static_cast<float>(scene->context->window_width) /
                                     static_cast<float>(scene->context->window_height));
+    // Blenderから変換したカメラ位置を設定
+    EZ_CameraSetPosition(scene->camera, CAMERA_POS_X, CAMERA_POS_Y, CAMERA_POS_Z);
+    EZ_CameraSetTargetPosition(scene->camera, CAMERA_TARGET_X, CAMERA_TARGET_Y, CAMERA_TARGET_Z);
 
     // ライト初期化
     scene->light = EZ_CreateLight();
@@ -85,6 +88,40 @@ bool game_scene_init(GameScene *scene)
         return false;
     }
 
+    // サーバーからプレイヤーIDを受信（ゲーム開始時）
+    LOG_DEBUG("プレイヤーID受信待機中...");
+    bool received_player_id = false;
+    Uint32 timeout_start = SDL_GetTicks();
+    const Uint32 TIMEOUT_MS = 5000;  // 5秒タイムアウト
+
+    while (!received_player_id && (SDL_GetTicks() - timeout_start < TIMEOUT_MS))
+    {
+        if (!network_listen_to_server(scene->network.get()))
+        {
+            LOG_ERROR("プレイヤーID受信中にエラーが発生しました");
+            return false;
+        }
+
+        // プレイヤーIDが設定されたか確認
+        if (scene->context->player_id != -1)
+        {
+            received_player_id = true;
+            LOG_SUCCESS("プレイヤーID受信完了: " << scene->context->player_id);
+        }
+
+        SDL_Delay(10);  // CPU負荷軽減
+    }
+
+    // if (!received_player_id)
+    // {
+    //     LOG_ERROR("プレイヤーID受信タイムアウト");
+    //     return false;
+    // }
+
+    // サーバー同期カウンターを初期化
+    scene->server_sync_counter = 0;
+
+    // 前フレームの入力を初期化
     LOG_SUCCESS("GameScene初期化完了");
     return true;
 }
@@ -103,19 +140,74 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input)
     EZ_ObjectSetPosition(scene->ball_object, scene->ball_data.point.x, scene->ball_data.point.y,
                          scene->ball_data.point.z);
 
-    // プレイヤーの座標を更新（将来的にネットワークから取得）
-    for (int i = 0; i < PLAYER_MAX; i++)
+    // サーバー同期カウンターをインクリメント
+    scene->server_sync_counter++;
+    bool should_sync_with_server = (scene->server_sync_counter >= SERVER_SYNC_INTERVAL);
+    if (should_sync_with_server)
     {
-        EZ_ObjectSetPosition(scene->player_objects[i], scene->player_data[i].point.x,
-                             scene->player_data[i].point.y, scene->player_data[i].point.z);
+        scene->server_sync_counter = 0;
     }
 
-    // Joy-Conのデータをサーバに送信
-    Packet joycon_packet;
-    joycon_packet.type = PACKET_TYPE_PLAYER_INPUT;
-    joycon_packet.size = sizeof(PlayerInput);
-    memcpy(joycon_packet.data, player_input, sizeof(PlayerInput));
-    network_send_to_server(scene->network.get(), joycon_packet);
+    // プレイヤーの更新処理
+    int my_player_id = scene->context->player_id;
+
+    for (int i = 0; i < PLAYER_MAX; i++)
+    {
+        if (i == my_player_id)
+        {
+            // 自分のプレイヤー：ローカルで即座に移動
+            // サーバーから受信したデータを保存（補正用）
+            Player server_player = scene->network->network_data_set.players[i];
+            // 定期的にサーバー座標で補正
+            // if (should_sync_with_server)
+            // {
+            //     scene->player_data[i] = server_player;
+            //     LOG_DEBUG("プレイヤー" << i << "をサーバー座標で補正: (" << server_player.point.x
+            //                            << ", " << server_player.point.y << ", "
+            //                            << server_player.point.z << ")");
+            // }
+
+            // Joy-Con入力でローカル移動
+            if (player_input->left)
+            {
+                scene->player_data[i].point.x -= PLAYER_MOVE_SPEED;
+            }
+            if (player_input->right)
+            {
+                scene->player_data[i].point.x += PLAYER_MOVE_SPEED;
+            }
+            if (player_input->front)
+            {
+                scene->player_data[i].point.z -= PLAYER_MOVE_SPEED;
+            }
+            if (player_input->back)
+            {
+                scene->player_data[i].point.z += PLAYER_MOVE_SPEED;
+            }
+
+            // オブジェクトの座標を更新
+            EZ_ObjectSetPosition(scene->player_objects[i], scene->player_data[i].point.x,
+                                 scene->player_data[i].point.y, scene->player_data[i].point.z);
+        }
+        else
+        {
+            // 他のプレイヤー：サーバーからの座標をそのまま使用
+            scene->player_data[i] = scene->network->network_data_set.players[i];
+            EZ_ObjectSetPosition(scene->player_objects[i], scene->player_data[i].point.x,
+                                 scene->player_data[i].point.y, scene->player_data[i].point.z);
+        }
+    }
+
+    // Joy-Conのデータが変化した場合のみサーバに送信
+    if (player_input->left || player_input->right || player_input->front || player_input->back ||
+        player_input->swing)
+    {
+        Packet joycon_packet;
+        joycon_packet.type = PACKET_TYPE_PLAYER_INPUT;
+        joycon_packet.size = sizeof(PlayerInput);
+        memcpy(joycon_packet.data, player_input, sizeof(PlayerInput));
+        network_send_to_server(scene->network.get(), &joycon_packet);
+    }
 
     return true;
 }

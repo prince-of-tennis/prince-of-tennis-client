@@ -12,6 +12,7 @@ struct Network
     SDLNet_SocketSet socket_set;
 
     NetworkDataSet network_data_set;
+    Context *context;  // プレイヤーID設定のため
 };
 
 /// @brief ネットワーク関連の初期化
@@ -27,7 +28,7 @@ bool network_listen_to_server(Network *network);
 /// @param network 構造体
 /// @param packet 送信するパケット
 /// @return 成功したか
-bool network_send_to_server(Network *network, Packet packet);
+bool network_send_to_server(Network *network, Packet *packet);
 
 /// @brief 受信したパケットの処理
 /// @param network 構造体

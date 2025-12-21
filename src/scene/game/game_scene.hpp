@@ -14,6 +14,23 @@
 
 #define PLAYER_MAX 2
 
+// カメラ設定（Blenderから変換）
+// Blender座標: (-0.015194m, -67.5868m, 13.8167m)
+// Blender回転: (77.3446°, -0.271264°, 1.10547°)
+// BlenderはY-up/Z-forward、OpenGLはY-up/-Z-forward
+// 変換ルール: X_gl = X_bl, Y_gl = Z_bl, Z_gl = -Y_bl
+constexpr float CAMERA_POS_X = -0.015194f;
+constexpr float CAMERA_POS_Y = 13.8167f;
+constexpr float CAMERA_POS_Z = 67.5868f;
+constexpr float CAMERA_TARGET_X = 0.0f;
+constexpr float CAMERA_TARGET_Y = 0.0f;
+constexpr float CAMERA_TARGET_Z = 0.0f;
+
+// プレイヤーのローカル移動速度
+constexpr float PLAYER_MOVE_SPEED = 0.3f;
+// サーバー補正を行うフレーム間隔
+constexpr int SERVER_SYNC_INTERVAL = 60;  // 60フレーム（約1秒）に1回
+
 struct GameScene
 {
     EZ_Shader shader;
@@ -30,6 +47,12 @@ struct GameScene
     // プレイヤー
     EZ_Object player_objects[PLAYER_MAX];
     Player player_data[PLAYER_MAX];
+
+    // 前フレームの入力（変化検出用）
+    PlayerInput last_player_input;
+
+    // サーバー同期用カウンター
+    int server_sync_counter;
 
     // 2D描画用
     EZ_2D_Font font;
