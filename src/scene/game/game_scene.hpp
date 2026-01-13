@@ -22,10 +22,10 @@
 // BlenderはY-up/Z-forward、OpenGLはY-up/-Z-forward
 // 変換ルール: X_gl = X_bl, Y_gl = Z_bl, Z_gl = -Y_bl
 constexpr float CAMERA_POS_X = -0.015194f;
-constexpr float CAMERA_POS_Y = 13.8167f;
-constexpr float CAMERA_POS_Z = 67.5868f;
+constexpr float CAMERA_POS_Y = 19.5f;    // 少し上から見る角度
+constexpr float CAMERA_POS_Z = 32.0f;    // 適度な距離
 constexpr float CAMERA_TARGET_X = 0.0f;
-constexpr float CAMERA_TARGET_Y = 5.0f;
+constexpr float CAMERA_TARGET_Y = 3.0f;  // 注視点
 constexpr float CAMERA_TARGET_Z = 0.0f;
 
 // プレイヤーのローカル移動速度
