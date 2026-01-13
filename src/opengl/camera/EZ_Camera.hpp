@@ -41,5 +41,11 @@ void EZ_CameraSetTargetPosition(EZ_Camera camera, float x, float y, float z);
 /// @param fov 視野角 (Field of View)
 void EZ_CameraSetFov(EZ_Camera camera, float fov);
 
+/// @brief カメラの描画範囲設定
+/// @param camera カメラ構造体
+/// @param near_plane ニアクリップ平面
+/// @param far_plane ファークリップ平面
+void EZ_CameraSetClipPlanes(EZ_Camera camera, float near_plane, float far_plane);
+
 glm::mat4 _EZ_CameraGetViewMatrix(_EZ_Camera *camera);
 glm::mat4 _EZ_CameraGetProjectionMatrix(_EZ_Camera *camera);
