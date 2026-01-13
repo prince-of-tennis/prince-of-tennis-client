@@ -4,6 +4,7 @@
 #include "common/ball.h"
 #include "common/player.h"
 #include "common/player_input.h"
+#include "common/player_swing.h"
 #include "core/context.hpp"
 #include "network/network.hpp"
 #include "opengl/2d/EZ_2d.h"
@@ -49,6 +50,12 @@ struct GameScene
     EZ_Object player_objects[PLAYER_MAX];
     Player player_data[PLAYER_MAX];
 
+    // テニスコート
+    EZ_Object court_object;
+
+    // グラウンド
+    EZ_Object ground_object;
+
     // 前フレームの入力（変化検出用）
     PlayerInput last_player_input;
 
@@ -65,7 +72,7 @@ struct GameScene
 
 bool game_scene_init(GameScene *scene);
 
-bool game_scene_update(GameScene *scene, PlayerInput *player_input);
+bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing *player_swing);
 
 void game_scene_draw(GameScene *scene);
 

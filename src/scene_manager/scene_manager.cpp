@@ -33,7 +33,8 @@ static bool init_scene(unique_ptr<SceneManager> &mgr)
     }
 }
 
-bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput *player_input)
+bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput *player_input,
+                  PlayerSwing *player_swing)
 {
     // MARK: メイン処理
     // ここにそれぞれのシーンで毎回実行する処理を記述する
@@ -47,7 +48,7 @@ bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput *player_input)
             return true;
 
         case SCENE_GAME:
-            if (!game_scene_update(&mgr->game_scene, player_input))
+            if (!game_scene_update(&mgr->game_scene, player_input, player_swing))
             {
                 return false;
             }

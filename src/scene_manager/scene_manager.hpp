@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "common/player_input.h"
+#include "common/player_swing.h"
 #include "core/context.hpp"
 #include "scene/game/game_scene.hpp"
 #include "scene_type.hpp"
@@ -29,7 +30,8 @@ void scene_manager_fini(unique_ptr<SceneManager> &mgr);
 
 /// @brief シーンを指定した実行する
 /// @return ループするか(SDL_FALSEの時に終了)
-bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput *player_input);
+bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput *player_input,
+                  PlayerSwing *player_swing);
 
 /// @brief シーンを変更
 /// @param scene シーン

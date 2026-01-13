@@ -37,7 +37,7 @@ bool game_scene_init(GameScene *scene)
 
     EZ_ObjectSetPosition(scene->ball_object, scene->ball_data.point.x, scene->ball_data.point.y,
                          scene->ball_data.point.z);
-    EZ_ObjectSetScale(scene->ball_object, 0.2, 0.2, 0.2);
+    EZ_ObjectSetScale(scene->ball_object, 0.5, 0.5, 0.5);
 
     LOG_SUCCESS("ボールオブジェクト初期化完了");
 
@@ -71,12 +71,27 @@ bool game_scene_init(GameScene *scene)
 
     LOG_SUCCESS("プレイヤーオブジェクト初期化完了");
 
-    // カメラ初期化
-    scene->camera = EZ_CreateCamera(static_cast<float>(scene->context->window_width) /
-                                    static_cast<float>(scene->context->window_height));
-    // Blenderから変換したカメラ位置を設定
-    EZ_CameraSetPosition(scene->camera, CAMERA_POS_X, CAMERA_POS_Y, CAMERA_POS_Z);
-    EZ_CameraSetTargetPosition(scene->camera, CAMERA_TARGET_X, CAMERA_TARGET_Y, CAMERA_TARGET_Z);
+    // テニスコートオブジェクトの初期化
+    scene->court_object = EZ_CreateObject("obj/tennis_court.obj", "img/container.jpeg");
+    if (scene->court_object == nullptr)
+    {
+        LOG_ERROR("テニスコートオブジェクトの作成に失敗しました");
+        return false;
+    }
+    EZ_ObjectSetPosition(scene->court_object, 0.0f, 0.0f, 0.0f);
+    EZ_ObjectSetScale(scene->court_object, 0.511242f, 0.511242f, 0.511242f);
+    LOG_SUCCESS("テニスコートオブジェクト初期化完了");
+
+    // グラウンドオブジェクトの初期化
+    scene->ground_object = EZ_CreateObject("obj/ground.obj", "img/container.jpeg");
+    if (scene->ground_object == nullptr)
+    {
+        LOG_ERROR("グラウンドオブジェクトの作成に失敗しました");
+        return false;
+    }
+    EZ_ObjectSetPosition(scene->ground_object, 0.0f, 0.0f, 0.0f);
+    EZ_ObjectSetScale(scene->ground_object, 1.0f, 1.0f, 1.0f);
+    LOG_SUCCESS("グラウンドオブジェクト初期化完了");
 
     // ライト初期化
     scene->light = EZ_CreateLight();
@@ -110,6 +125,23 @@ bool game_scene_init(GameScene *scene)
         SDL_Delay(10);  // CPU負荷軽減
     }
 
+    // カメラ初期化（player_id受信後）
+    scene->camera = EZ_CreateCamera(static_cast<float>(scene->context->window_width) /
+                                    static_cast<float>(scene->context->window_height));
+
+    // プレイヤーIDに応じてカメラ位置を設定
+    // player_id == 0: コート奥側から見る（Z正方向）
+    // player_id == 1: コート手前側から見る（Z負方向）
+    float camera_z = (scene->context->player_id == 0) ? CAMERA_POS_Z : -CAMERA_POS_Z;
+
+    LOG_DEBUG("カメラ設定: player_id=" << scene->context->player_id << " camera_z=" << camera_z);
+
+    EZ_CameraSetPosition(scene->camera, CAMERA_POS_X, CAMERA_POS_Y, camera_z);
+    EZ_CameraSetTargetPosition(scene->camera, CAMERA_TARGET_X, CAMERA_TARGET_Y, CAMERA_TARGET_Z);
+
+    // カメラの描画範囲を拡大（Z軸方向にオブジェクトが見えるように）
+    EZ_CameraSetClipPlanes(scene->camera, 0.1f, 200.0f);
+
     // サーバー同期カウンターを初期化
     scene->server_sync_counter = 0;
 
@@ -130,7 +162,7 @@ bool game_scene_init(GameScene *scene)
     return true;
 }
 
-bool game_scene_update(GameScene *scene, PlayerInput *player_input)
+bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing *player_swing)
 {
     if (!network_listen_to_server(scene->network.get()))
     {
@@ -162,15 +194,75 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input)
                              scene->player_data[i].point.y, scene->player_data[i].point.z);
     }
 
-    // Joy-Conのデータが変化した場合のみサーバに送信
-    if (player_input->left || player_input->right || player_input->front || player_input->back ||
-        player_input->swing)
+    // カメラ追従処理（自分のプレイヤーに追従）
+    int my_player_id = scene->context->player_id;
+    if (my_player_id >= 0 && my_player_id < PLAYER_MAX)
     {
+        Player &my_player = scene->player_data[my_player_id];
+
+        // カメラ位置: プレイヤーの後方に配置
+        float camera_z = (my_player_id == 0) ? CAMERA_POS_Z : -CAMERA_POS_Z;
+        float camera_x = my_player.point.x + CAMERA_POS_X;
+        float camera_y = CAMERA_POS_Y;
+        float camera_z_offset = my_player.point.z + camera_z;
+
+        EZ_CameraSetPosition(scene->camera, camera_x, camera_y, camera_z_offset);
+
+        // 注視点: プレイヤーの位置を見る（オフセットは加算しない）
+        float target_x = my_player.point.x;
+        float target_y = CAMERA_TARGET_Y;
+        float target_z = my_player.point.z;
+
+        EZ_CameraSetTargetPosition(scene->camera, target_x, target_y, target_z);
+    }
+
+    // Joy-Conのデータが変化した場合のみサーバに送信
+    if (player_input != nullptr)
+    {
+        PlayerInput adjusted_input = *player_input;
+
+        // player_id == 1の場合は、カメラが反対側なので入力を反転
+        if (scene->context->player_id == 1)
+        {
+            bool temp_front = adjusted_input.front;
+            adjusted_input.front = adjusted_input.back;
+            adjusted_input.back = temp_front;
+
+            bool temp_left = adjusted_input.left;
+            adjusted_input.left = adjusted_input.right;
+            adjusted_input.right = temp_left;
+        }
+
         Packet joycon_packet;
         joycon_packet.type = PACKET_TYPE_PLAYER_INPUT;
         joycon_packet.size = sizeof(PlayerInput);
-        memcpy(joycon_packet.data, player_input, sizeof(PlayerInput));
+        memcpy(joycon_packet.data, &adjusted_input, sizeof(PlayerInput));
         network_send_to_server(scene->network.get(), &joycon_packet);
+    }
+
+    // スイングデータが閾値を超えた場合にサーバに送信
+    if (player_swing != nullptr)
+    {
+        PlayerSwing adjusted_swing = *player_swing;
+
+        // player_id == 0の場合
+        if (scene->context->player_id == 0)
+        {
+            // z軸を反転（Joy-Conの座標系とゲーム座標系の違いを補正）
+            adjusted_swing.acc_z = -adjusted_swing.acc_z;
+        }
+        // player_id == 1の場合
+        else if (scene->context->player_id == 1)
+        {
+            // カメラが反対側なので、x軸のみ反転（z軸はそのまま）
+            adjusted_swing.acc_x = -adjusted_swing.acc_x;
+        }
+
+        Packet swing_packet;
+        swing_packet.type = PACKET_TYPE_PLAYER_SWING;
+        swing_packet.size = sizeof(PlayerSwing);
+        memcpy(swing_packet.data, &adjusted_swing, sizeof(PlayerSwing));
+        network_send_to_server(scene->network.get(), &swing_packet);
     }
 
     return true;
@@ -181,6 +273,18 @@ void game_scene_draw(GameScene *scene)
     // 画面クリア
     EZ_BackgroundClear(scene->context->background_r, scene->context->background_g,
                        scene->context->background_b);
+
+    // グラウンドの描画
+    if (scene->ground_object)
+    {
+        EZ_DrawObject(scene->ground_object, scene->shader, scene->camera, scene->light);
+    }
+
+    // テニスコートの描画
+    if (scene->court_object)
+    {
+        EZ_DrawObject(scene->court_object, scene->shader, scene->camera, scene->light);
+    }
 
     // ボールの描画
     if (scene->ball_object)

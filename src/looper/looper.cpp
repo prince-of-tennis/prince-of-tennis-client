@@ -109,31 +109,49 @@ void loop(Looper *looper)
 
     while (is_running)
     {
-        // fps_frame_start();
+        fps_frame_start();
 
         PlayerInput player_input = get_joycon(&looper->joycon, g_context.player_id);
-        // if (player_input.left || player_input.right || player_input.front || player_input.back ||
-        //     player_input.swing)
-        // {
-        //     LOG_DEBUG("プレイヤー入力: left="
-        //               << player_input.left << ", right=" << player_input.right
-        //               << ", front=" << player_input.front << ", back=" << player_input.back
-        //               << ", swing=" << player_input.swing);
-        // }
+
+        // 移動入力があるかチェック（どれか一つでもtrueなら入力あり）
+        bool has_movement_input =
+            player_input.left || player_input.right || player_input.front || player_input.back;
+
+        // スイングデータを取得
+        PlayerSwing player_swing = get_joycon_swing(&looper->joycon, g_context.player_id);
+
+        // スイング動作が閾値を超えたかチェック
+        bool should_send_swing = joycon_has_significant_swing(&looper->joycon, &player_swing);
 
         // イベント処理
         is_running = window_manager_update();
 
         if (is_running)
         {
-            // シーン更新
-            is_running = scene_update(looper->scene_manager, &player_input);
+            // シーン更新（移動入力があるかswing送信が必要な場合）
+            if (has_movement_input || should_send_swing)
+            {
+                is_running = scene_update(looper->scene_manager,
+                                          has_movement_input ? &player_input : nullptr,
+                                          should_send_swing ? &player_swing : nullptr);
+
+                // swingキャッシュを更新（連続送信を防ぐため）
+                if (should_send_swing)
+                {
+                    looper->joycon.cached_swing = player_swing;
+                }
+            }
+            else
+            {
+                // 入力がない場合はNULLを渡す
+                is_running = scene_update(looper->scene_manager, nullptr, nullptr);
+            }
 
             // バッファスワップ
             SDL_GL_SwapWindow(g_context.window);
         }
 
-        // fps_frame_end();
+        fps_frame_end();
     }
 }
 
