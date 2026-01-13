@@ -39,6 +39,12 @@ void EZ_CameraSetFov(EZ_Camera camera, float fov)
     camera->fov = fov;
 }
 
+void EZ_CameraSetClipPlanes(EZ_Camera camera, float near_plane, float far_plane)
+{
+    camera->near_plane = near_plane;
+    camera->far_plane = far_plane;
+}
+
 glm::mat4 _EZ_CameraGetViewMatrix(_EZ_Camera *camera)
 {
     return glm::lookAt(camera->position, camera->target, camera->up);
