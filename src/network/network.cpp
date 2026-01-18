@@ -1,7 +1,11 @@
 #include "network/network.hpp"
 
 #include "common/packet.h"
+#include "network/packet_util.hpp"
 #include "util/log.hpp"
+
+// プレイヤー数の最大値
+constexpr int NETWORK_PLAYER_MAX = 2;
 
 bool network_init(Network *network, Context *context)
 {
@@ -64,34 +68,59 @@ bool network_handle_packet(Network *network, Packet packet)
 {
     switch (packet.type)
     {
+        // プレイヤーID割り当て: サーバーから自分のプレイヤーIDを受信
         case PACKET_TYPE_SET_PLAYER_ID:
         {
             int player_id;
-            memcpy(&player_id, packet.data, sizeof(int));
+            if (!packet_deserialize(packet, player_id))
+            {
+                LOG_ERROR("プレイヤーIDのデシリアライズに失敗");
+                return false;
+            }
             network->context->player_id = player_id;
             LOG_SUCCESS("プレイヤーID設定: " << player_id);
             break;
         }
 
+        // ゲームフェーズ更新: ゲームの進行状態（サーブ待機、プレイ中など）
         case PACKET_TYPE_GAME_PHASE:
+        {
             GamePhase game_phase;
-            memcpy(&game_phase, packet.data, sizeof(GamePhase));
+            if (!packet_deserialize(packet, game_phase))
+            {
+                LOG_ERROR("ゲームフェーズのデシリアライズに失敗");
+                return false;
+            }
             LOG_DEBUG("GamePhase: " << game_phase);
             network->network_data_set.game_phase = game_phase;
             break;
+        }
 
+        // ボール状態更新: ボールの位置・速度情報
         case PACKET_TYPE_BALL_STATE:
+        {
             Ball ball;
-            memcpy(&ball, packet.data, sizeof(Ball));
+            if (!packet_deserialize(packet, ball))
+            {
+                LOG_ERROR("ボール状態のデシリアライズに失敗");
+                return false;
+            }
             network->network_data_set.ball = ball;
             break;
+        }
 
+        // プレイヤー状態更新: 各プレイヤーの位置情報
         case PACKET_TYPE_PLAYER_STATE:
+        {
             Player player;
-            memcpy(&player, packet.data, sizeof(Player));
+            if (!packet_deserialize(packet, player))
+            {
+                LOG_ERROR("プレイヤー状態のデシリアライズに失敗");
+                return false;
+            }
 
-            // player_idの範囲チェック (0-1)
-            if (player.player_id < 0 || player.player_id >= 2)
+            // player_idの範囲チェック
+            if (player.player_id < 0 || player.player_id >= NETWORK_PLAYER_MAX)
             {
                 LOG_ERROR("不正なplayer_idを受信: " << player.player_id);
                 return false;
@@ -99,12 +128,20 @@ bool network_handle_packet(Network *network, Packet packet)
             // プレイヤーデータを更新
             network->network_data_set.players[player.player_id] = player;
             break;
+        }
 
+        // スコア更新: ゲームスコア情報
         case PACKET_TYPE_SCORE_UPDATE:
+        {
             GameScore game_score;
-            memcpy(&game_score, packet.data, sizeof(GameScore));
+            if (!packet_deserialize(packet, game_score))
+            {
+                LOG_ERROR("スコアデータのデシリアライズに失敗");
+                return false;
+            }
             network->network_data_set.game_score = game_score;
             break;
+        }
     }
 
     return true;
