@@ -88,18 +88,19 @@ bool looper_init(Looper *looper, eSceneType default_scene)
         return false;
     }
 
+    // Joycon初期化
+    if (!joycon_init(&looper->joycon)) return false;
+
     // SceneManager初期化
     looper->scene_manager = make_unique<SceneManager>();
     looper->scene_manager->context = &g_context;
+    looper->scene_manager->joycon = &looper->joycon;
     if (!scene_manager_init(looper->scene_manager, default_scene))
     {
         LOG_ERROR("シーンの初期化に失敗しました");
         return false;
     }
 
-    // if (!joycon_init(&looper->joycon)) return false;
-
-    joycon_init(&looper->joycon);
     return true;
 }
 

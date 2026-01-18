@@ -19,7 +19,9 @@ static bool init_scene(unique_ptr<SceneManager> &mgr)
     {
         case SCENE_TITLE:
             LOG_DEBUG("SCENE_TITLEを初期化します。");
-            return true;
+            mgr->title_scene.context = mgr->context;
+            mgr->title_scene.joycon = mgr->joycon;
+            return title_scene_init(&mgr->title_scene);
 
         case SCENE_GAME:
             LOG_DEBUG("SCENE_GAMEを初期化します。");
@@ -41,11 +43,15 @@ bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput *player_input,
     switch (mgr->current_scene)
     {
         case SCENE_TITLE:
-            if (!scene_change(mgr, SCENE_GAME))
+        {
+            bool should_change = title_scene_update(&mgr->title_scene);
+            title_scene_draw(&mgr->title_scene);
+            if (should_change)
             {
-                return false;
+                return scene_change(mgr, SCENE_GAME);
             }
             return true;
+        }
 
         case SCENE_GAME:
             if (!game_scene_update(&mgr->game_scene, player_input, player_swing))
@@ -69,6 +75,7 @@ static void fini_scene(unique_ptr<SceneManager> &mgr)
     {
         case SCENE_TITLE:
             LOG_DEBUG("SCENE_TITLEを終了します。");
+            title_scene_fini(&mgr->title_scene);
             break;
         case SCENE_GAME:
             LOG_DEBUG("SCENE_GAMEを終了します。");
