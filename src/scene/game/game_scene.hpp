@@ -33,6 +33,19 @@ constexpr float PLAYER_MOVE_SPEED = 0.3f;
 // サーバー補正を行うフレーム間隔
 constexpr int SERVER_SYNC_INTERVAL = 60;  // 60フレーム（約1秒）に1回
 
+// テニスコートのスケール（Blenderモデルの単位をゲーム単位に変換）
+constexpr float TENNIS_COURT_SCALE = 0.511242f;
+
+// プレイヤー初期座標（player_id 0 と 1）
+constexpr float PLAYER_INITIAL_X[PLAYER_MAX] = {0.0f, 10.0f};
+constexpr float PLAYER_INITIAL_Y = 0.0f;
+constexpr float PLAYER_INITIAL_Z = 0.0f;
+
+// スコア表示設定
+constexpr float SCORE_OFFSET_X = 100.0f;  // 中央からのオフセット
+constexpr float SCORE_POS_Y = 50.0f;
+constexpr float SCORE_FONT_SIZE = 60.0f;
+
 struct GameScene
 {
     EZ_Shader shader;
