@@ -7,7 +7,9 @@
 #include "common/player_input.h"
 #include "common/player_swing.h"
 #include "core/context.hpp"
+#include "joycon/joycon.hpp"
 #include "scene/game/game_scene.hpp"
+#include "scene/title/title_scene.hpp"
 #include "scene_type.hpp"
 
 using namespace std;
@@ -16,6 +18,8 @@ struct SceneManager
 {
     eSceneType current_scene;
     Context *context;
+    Joycon *joycon;
+    TitleScene title_scene;
     GameScene game_scene;
     PlayerInput player_input;
 };
