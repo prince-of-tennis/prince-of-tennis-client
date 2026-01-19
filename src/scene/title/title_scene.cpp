@@ -29,8 +29,8 @@ bool title_scene_update(TitleScene *scene)
         scene->show_start_message = !scene->show_start_message;
     }
 
-    // Aボタンが押されたらシーン遷移
-    if (scene->joycon != nullptr && scene->joycon->joycon.button.btn.A)
+    // Aボタンが押された瞬間にシーン遷移
+    if (scene->joycon != nullptr && joycon_is_just_pressed(scene->joycon, JOYCON_BTN_A))
     {
         LOG_DEBUG("タイトルシーン: Aボタン入力を検出、ゲームシーンに遷移します");
         return true;
