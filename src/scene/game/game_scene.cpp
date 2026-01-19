@@ -148,8 +148,22 @@ bool game_scene_init(GameScene *scene)
 
     // スコアの初期化
     memset(&scene->game_score, 0, sizeof(GameScore));
+    memset(&scene->prev_game_score, 0, sizeof(GameScore));
 
-    // 前フレームの入力を初期化
+    // オーディオ初期化
+    if (!audio_init(&scene->audio))
+    {
+        LOG_ERROR("オーディオの初期化に失敗しました");
+        return false;
+    }
+
+    // SE読み込み
+    scene->se_hit_ball = audio_load_se(&scene->audio, "audio/se/hit_ball.mp3");
+    scene->se_yatta = audio_load_se(&scene->audio, "audio/se/yatta.mp3");
+
+    // ボール打撃検出用の初期化
+    scene->prev_hit_count = 0;
+
     LOG_SUCCESS("GameScene初期化完了");
     return true;
 }
@@ -168,8 +182,27 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
     EZ_ObjectSetPosition(scene->ball_object, scene->ball_data.point.x, scene->ball_data.point.y,
                          scene->ball_data.point.z);
 
+    // ボール打撃検出（hit_countが増加したらSE再生）
+    if (scene->ball_data.hit_count > scene->prev_hit_count)
+    {
+        audio_play_se(&scene->audio, scene->se_hit_ball);
+    }
+    scene->prev_hit_count = scene->ball_data.hit_count;
+
     // スコアデータの更新
     scene->game_score = scene->network->network_data_set.game_score;
+
+    // 自分が得点したときにSE再生
+    int my_id = scene->context->player_id;
+    int my_prev_score = (my_id == 0) ? scene->prev_game_score.current_game_p1
+                                     : scene->prev_game_score.current_game_p2;
+    int my_curr_score = (my_id == 0) ? scene->game_score.current_game_p1
+                                     : scene->game_score.current_game_p2;
+    if (my_curr_score > my_prev_score)
+    {
+        audio_play_se(&scene->audio, scene->se_yatta);
+    }
+    scene->prev_game_score = scene->game_score;
 
     // サーバー同期カウンターをインクリメント
     scene->server_sync_counter++;
