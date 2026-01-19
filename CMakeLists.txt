@@ -20,6 +20,9 @@ find_package(SDL2 REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL2_NET REQUIRED SDL2_net)
 
+# SDL2_mixerの読み込み
+pkg_check_modules(SDL2_MIXER REQUIRED SDL2_mixer)
+
 # FreeTypeの読み込み
 pkg_check_modules(FREETYPE REQUIRED freetype2)
 
@@ -42,6 +45,7 @@ target_include_directories(client PRIVATE
         "libs/opengl"
         ${SDL2_INCLUDE_DIRS} # SDL2のヘッダファイルへのパスを追加
         ${SDL2_NET_INCLUDE_DIRS}
+        ${SDL2_MIXER_INCLUDE_DIRS}
         ${FREETYPE_INCLUDE_DIRS}
 )
 
@@ -51,8 +55,9 @@ target_link_libraries(client PRIVATE
 
         # --- システムライブラリ ---
         ${SDL2_LIBRARIES} # SDL2::SDL2 の代わりにこの変数を使う
-        ${SDL2_NET_LIBRARIES} # SDL2_net
-        ${FREETYPE_LIBRARIES} # FreeType
+        ${SDL2_NET_LINK_LIBRARIES} # SDL2_net
+        ${SDL2_MIXER_LINK_LIBRARIES} # SDL2_mixer
+        ${FREETYPE_LINK_LIBRARIES} # FreeType
         assimp
         dl
         joyconlib
