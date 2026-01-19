@@ -187,11 +187,11 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
                          scene->ball_data.point.z);
 
     // ボール打撃検出（hit_countが増加したらSE再生）
-    if (scene->ball_data.hit_count > scene->prev_hit_count)
+    bool ball_hit_detected = (scene->ball_data.hit_count > scene->prev_hit_count);
+    if (ball_hit_detected)
     {
         audio_play_se(&scene->audio, scene->se_hit_ball);
     }
-    scene->prev_hit_count = scene->ball_data.hit_count;
 
     // スコアデータの更新
     scene->game_score = scene->network->network_data_set.game_score;
@@ -221,6 +221,17 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
         scene->player_data[i] = scene->network->network_data_set.players[i];
         EZ_ObjectSetPosition(scene->player_objects[i], scene->player_data[i].point.x,
                              scene->player_data[i].point.y, scene->player_data[i].point.z);
+
+        // #86: でかすぎんだろ - Xボタン押下中のみ10倍
+        bool is_giant = (i == my_id) && scene->ability_manager.button_held[ABILITY_GIANT];
+        if (is_giant)
+        {
+            EZ_ObjectSetScale(scene->player_objects[i], 10.0f, 10.0f, 10.0f);
+        }
+        else
+        {
+            EZ_ObjectSetScale(scene->player_objects[i], 1.0f, 1.0f, 1.0f);
+        }
     }
 
     // カメラ追従処理（自分のプレイヤーに追従）
@@ -253,7 +264,7 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
     }
 
     // 打撃時発動能力のチェック（ボールを打った場合）
-    if (scene->ball_data.hit_count > scene->prev_hit_count)
+    if (ball_hit_detected)
     {
         AbilityActivateRequest* hit_req = ability_check_on_hit(&scene->ability_manager, my_id);
         if (hit_req)
@@ -264,6 +275,9 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
 
     // 能力フレームカウント更新
     ability_manager_tick(&scene->ability_manager);
+
+    // 打撃カウントを更新（次フレーム用）
+    scene->prev_hit_count = scene->ball_data.hit_count;
 
     return true;
 }
@@ -288,6 +302,17 @@ void game_scene_draw(GameScene *scene)
 
     // ボールの描画（#88: ABILITY_INVISIBLE_BALL がアクティブなら描画しない）
     bool ball_invisible = ability_is_local_active(&scene->ability_manager, ABILITY_INVISIBLE_BALL);
+    if (ball_invisible)
+    {
+        // 発動中のフレーム数をログ出力（デバッグ用）
+        uint32_t remaining = scene->ability_manager.local_states[ABILITY_INVISIBLE_BALL].remaining_frames;
+        static uint32_t last_remaining = 0;
+        if (remaining != last_remaining)
+        {
+            LOG_DEBUG("ボール消える発動中: 残り" << remaining << "frames");
+            last_remaining = remaining;
+        }
+    }
     if (scene->ball_object && !ball_invisible)
     {
         EZ_DrawObject(scene->ball_object, scene->shader, scene->camera, scene->light);
