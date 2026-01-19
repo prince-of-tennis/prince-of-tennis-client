@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/ability.h"
 #include "common/player_input.h"
 #include "common/player_swing.h"
 
@@ -31,3 +32,11 @@ void game_scene_send_player_input(GameScene *scene, PlayerInput *player_input);
  * @param player_swing スイングデータ（nullptrの場合は送信しない）
  */
 void game_scene_send_player_swing(GameScene *scene, PlayerSwing *player_swing);
+
+/**
+ * @brief 能力発動リクエストをサーバーに送信
+ *
+ * @param scene ゲームシーン
+ * @param request 能力発動リクエスト（nullptrの場合は送信しない）
+ */
+void game_scene_send_ability_request(GameScene *scene, const AbilityActivateRequest *request);

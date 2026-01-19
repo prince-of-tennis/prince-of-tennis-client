@@ -27,6 +27,7 @@ static bool init_scene(unique_ptr<SceneManager> &mgr)
             LOG_DEBUG("SCENE_GAMEを初期化します。");
 
             mgr->game_scene.context = mgr->context;
+            mgr->game_scene.joycon = mgr->joycon;
             return game_scene_init(&mgr->game_scene);
 
         default:

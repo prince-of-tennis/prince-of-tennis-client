@@ -67,3 +67,19 @@ void game_scene_send_player_swing(GameScene *scene, PlayerSwing *player_swing)
     }
     network_send_to_server(scene->network.get(), &packet);
 }
+
+void game_scene_send_ability_request(GameScene *scene, const AbilityActivateRequest *request)
+{
+    if (request == nullptr)
+    {
+        return;
+    }
+
+    Packet packet;
+    if (!packet_serialize(&packet, PACKET_TYPE_ABILITY_REQUEST, *request))
+    {
+        LOG_ERROR("能力リクエストのシリアライズに失敗");
+        return;
+    }
+    network_send_to_server(scene->network.get(), &packet);
+}

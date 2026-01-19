@@ -2,6 +2,7 @@
 
 #include "common/GamePhase.h"
 #include "common/GameScore.h"
+#include "common/ability.h"
 #include "common/ball.h"
 #include "common/player.h"
 
@@ -11,4 +12,5 @@ struct NetworkDataSet
     Ball ball;
     Player players[2];
     GameScore game_score;
+    AbilityState ability_states[2];  // プレイヤーごとの能力状態
 };

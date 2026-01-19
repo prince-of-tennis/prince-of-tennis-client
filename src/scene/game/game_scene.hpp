@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ability/ability_manager.hpp"
 #include "audio/audio.hpp"
 #include "common/GameScore.h"
 #include "common/ball.h"
@@ -14,6 +15,9 @@
 #include "opengl/object/EZ_Object.hpp"
 #include "opengl/shader/EZ_Shader.hpp"
 #include "util/helper.hpp"
+
+// 前方宣言
+struct Joycon;
 
 #define PLAYER_MAX 2
 
@@ -53,6 +57,7 @@ struct GameScene
     EZ_Camera camera;
     EZ_Light light;
     Context *context;
+    Joycon *joycon;
 
     UniquePtr<Network> network;
 
@@ -91,6 +96,9 @@ struct GameScene
     Audio audio;
     int se_hit_ball;  // ボールを打った時のSE
     int se_yatta;     // 得点時のSE
+
+    // 能力マネージャー
+    AbilityManager ability_manager;
 };
 
 bool game_scene_init(GameScene *scene);

@@ -4,6 +4,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "glad/glad.h"
+#include "joycon/joycon.hpp"
 #include "network/network.hpp"
 #include "opengl/2d/EZ_2d.h"
 #include "opengl/EasyGL.hpp"
@@ -164,6 +165,9 @@ bool game_scene_init(GameScene *scene)
     // ボール打撃検出用の初期化
     scene->prev_hit_count = 0;
 
+    // 能力マネージャー初期化
+    ability_manager_init(&scene->ability_manager);
+
     LOG_SUCCESS("GameScene初期化完了");
     return true;
 }
@@ -228,6 +232,39 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
     // スイングデータをサーバーに送信
     game_scene_send_player_swing(scene, player_swing);
 
+    // 能力ボタン状態更新
+    ability_manager_update(&scene->ability_manager, scene->joycon);
+
+    // 即時発動能力のチェック
+    AbilityActivateRequest* instant_req = ability_check_instant(&scene->ability_manager, my_id);
+    if (instant_req)
+    {
+        game_scene_send_ability_request(scene, instant_req);
+    }
+
+    // スイング時発動能力のチェック（スイングが送信される場合）
+    if (player_swing != nullptr)
+    {
+        AbilityActivateRequest* swing_req = ability_check_on_swing(&scene->ability_manager, my_id);
+        if (swing_req)
+        {
+            game_scene_send_ability_request(scene, swing_req);
+        }
+    }
+
+    // 打撃時発動能力のチェック（ボールを打った場合）
+    if (scene->ball_data.hit_count > scene->prev_hit_count)
+    {
+        AbilityActivateRequest* hit_req = ability_check_on_hit(&scene->ability_manager, my_id);
+        if (hit_req)
+        {
+            game_scene_send_ability_request(scene, hit_req);
+        }
+    }
+
+    // 能力フレームカウント更新
+    ability_manager_tick(&scene->ability_manager);
+
     return true;
 }
 
@@ -249,8 +286,9 @@ void game_scene_draw(GameScene *scene)
         EZ_DrawObject(scene->court_object, scene->shader, scene->camera, scene->light);
     }
 
-    // ボールの描画
-    if (scene->ball_object)
+    // ボールの描画（#88: ABILITY_INVISIBLE_BALL がアクティブなら描画しない）
+    bool ball_invisible = ability_is_local_active(&scene->ability_manager, ABILITY_INVISIBLE_BALL);
+    if (scene->ball_object && !ball_invisible)
     {
         EZ_DrawObject(scene->ball_object, scene->shader, scene->camera, scene->light);
     }

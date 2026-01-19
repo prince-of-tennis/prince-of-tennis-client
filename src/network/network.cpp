@@ -1,5 +1,6 @@
 #include "network/network.hpp"
 
+#include "common/ability.h"
 #include "common/packet.h"
 #include "network/packet_util.hpp"
 #include "util/log.hpp"
@@ -140,6 +141,29 @@ bool network_handle_packet(Network *network, Packet packet)
                 return false;
             }
             network->network_data_set.game_score = game_score;
+            break;
+        }
+
+        // 能力状態更新: プレイヤーの能力状態
+        case PACKET_TYPE_ABILITY_STATE:
+        {
+            AbilityState ability_state;
+            if (!packet_deserialize(packet, ability_state))
+            {
+                LOG_ERROR("能力状態のデシリアライズに失敗");
+                return false;
+            }
+
+            // player_idの範囲チェック
+            if (ability_state.player_id < 0 || ability_state.player_id >= NETWORK_PLAYER_MAX)
+            {
+                LOG_ERROR("不正なplayer_idを受信（能力状態）: " << ability_state.player_id);
+                return false;
+            }
+            network->network_data_set.ability_states[ability_state.player_id] = ability_state;
+            LOG_DEBUG("能力状態受信: player=" << ability_state.player_id
+                                              << " ability=" << static_cast<int>(ability_state.active_ability)
+                                              << " remaining=" << ability_state.remaining_frames);
             break;
         }
     }
