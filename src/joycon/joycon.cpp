@@ -34,6 +34,10 @@ bool joycon_init(Joycon *joycon)
     // スイング時刻を初期化
     joycon->last_swing_time_ms = 0;
 
+    // ボタン状態を初期化
+    memset(joycon->buttons, 0, sizeof(joycon->buttons));
+    memset(joycon->prev_buttons, 0, sizeof(joycon->prev_buttons));
+
     LOG_SUCCESS("Joy-Conの初期化に成功しました");
 
     return true;
@@ -152,6 +156,65 @@ bool joycon_has_significant_swing(Joycon *joycon, const PlayerSwing *current)
     }
 
     return false;
+}
+
+void joycon_update_buttons(Joycon *joycon)
+{
+    // 前フレームの状態を保存
+    memcpy(joycon->prev_buttons, joycon->buttons, sizeof(joycon->buttons));
+
+    // 現在の状態を取得（joycon_get_stateは既に呼ばれている前提）
+    const joycon_btn &btn = joycon->joycon.button;
+
+    // joyconlib_tのbtnフィールドから配列へマッピング
+    joycon->buttons[JOYCON_BTN_A] = btn.btn.A;
+    joycon->buttons[JOYCON_BTN_B] = btn.btn.B;
+    joycon->buttons[JOYCON_BTN_X] = btn.btn.X;
+    joycon->buttons[JOYCON_BTN_Y] = btn.btn.Y;
+    joycon->buttons[JOYCON_BTN_R] = btn.btn.R;
+    joycon->buttons[JOYCON_BTN_ZR] = btn.btn.ZR;
+    joycon->buttons[JOYCON_BTN_L] = btn.btn.L;
+    joycon->buttons[JOYCON_BTN_ZL] = btn.btn.ZL;
+    joycon->buttons[JOYCON_BTN_PLUS] = btn.btn.Plus;
+    joycon->buttons[JOYCON_BTN_MINUS] = btn.btn.Minus;
+    joycon->buttons[JOYCON_BTN_RSTICK] = btn.btn.RStick;
+    joycon->buttons[JOYCON_BTN_LSTICK] = btn.btn.LStick;
+    joycon->buttons[JOYCON_BTN_UP] = btn.btn.Up;
+    joycon->buttons[JOYCON_BTN_DOWN] = btn.btn.Down;
+    joycon->buttons[JOYCON_BTN_LEFT] = btn.btn.Left;
+    joycon->buttons[JOYCON_BTN_RIGHT] = btn.btn.Right;
+    joycon->buttons[JOYCON_BTN_HOME] = btn.btn.Home;
+    joycon->buttons[JOYCON_BTN_CAPTURE] = btn.btn.Capture;
+    // SR/SLは左右どちらかがあれば有効
+    joycon->buttons[JOYCON_BTN_SR] = btn.btn.SR_r || btn.btn.SR_l;
+    joycon->buttons[JOYCON_BTN_SL] = btn.btn.SL_r || btn.btn.SL_l;
+}
+
+bool joycon_is_pressed(const Joycon *joycon, JoyconButton button)
+{
+    if (button < 0 || button >= JOYCON_BTN_COUNT)
+    {
+        return false;
+    }
+    return joycon->buttons[button];
+}
+
+bool joycon_is_just_pressed(const Joycon *joycon, JoyconButton button)
+{
+    if (button < 0 || button >= JOYCON_BTN_COUNT)
+    {
+        return false;
+    }
+    return joycon->buttons[button] && !joycon->prev_buttons[button];
+}
+
+bool joycon_is_just_released(const Joycon *joycon, JoyconButton button)
+{
+    if (button < 0 || button >= JOYCON_BTN_COUNT)
+    {
+        return false;
+    }
+    return !joycon->buttons[button] && joycon->prev_buttons[button];
 }
 
 void joycon_fini(Joycon *joycon)

@@ -114,6 +114,9 @@ void loop(Looper *looper)
 
         PlayerInput player_input = get_joycon(&looper->joycon, g_context.player_id);
 
+        // ボタン状態を更新
+        joycon_update_buttons(&looper->joycon);
+
         // 移動入力があるかチェック（どれか一つでもtrueなら入力あり）
         bool has_movement_input =
             player_input.left || player_input.right || player_input.front || player_input.back;
