@@ -1,5 +1,6 @@
 #pragma once
 
+#include "audio/audio.hpp"
 #include "common/GameScore.h"
 #include "common/ball.h"
 #include "common/player.h"
@@ -81,6 +82,15 @@ struct GameScene
 
     // スコアデータ
     GameScore game_score;
+    GameScore prev_game_score;  // 前フレームのスコア（変化検出用）
+
+    // ボール打撃検出用
+    int prev_hit_count;  // 前フレームのhit_count
+
+    // オーディオ
+    Audio audio;
+    int se_hit_ball;  // ボールを打った時のSE
+    int se_yatta;     // 得点時のSE
 };
 
 bool game_scene_init(GameScene *scene);
