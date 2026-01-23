@@ -222,8 +222,9 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
         EZ_ObjectSetPosition(scene->player_objects[i], scene->player_data[i].point.x,
                              scene->player_data[i].point.y, scene->player_data[i].point.z);
 
-        // #86: でかすぎんだろ - Xボタン押下中のみ10倍
-        bool is_giant = (i == my_id) && scene->ability_manager.button_held[ABILITY_GIANT];
+        // #86: でかすぎんだろ - サーバーから受信した能力状態でスケール変更
+        const AbilityState& ability_state = scene->network->network_data_set.ability_states[i];
+        bool is_giant = (ability_state.active_ability == ABILITY_GIANT && ability_state.remaining_frames > 0);
         if (is_giant)
         {
             EZ_ObjectSetScale(scene->player_objects[i], 10.0f, 10.0f, 10.0f);
@@ -251,6 +252,19 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
     if (instant_req)
     {
         game_scene_send_ability_request(scene, instant_req);
+    }
+
+    // #86: でかすぎんだろ - Xボタン状態変化をサーバーに送信
+    static bool prev_giant_button = false;
+    bool curr_giant_button = scene->ability_manager.button_held[ABILITY_GIANT];
+    if (curr_giant_button != prev_giant_button)
+    {
+        AbilityActivateRequest giant_req;
+        giant_req.player_id = my_id;
+        giant_req.ability_type = ABILITY_GIANT;
+        giant_req.trigger = curr_giant_button ? TRIGGER_INSTANT : TRIGGER_ON_HIT; // ON_HIT=解除の意味で流用
+        game_scene_send_ability_request(scene, &giant_req);
+        prev_giant_button = curr_giant_button;
     }
 
     // スイング時発動能力のチェック（スイングが送信される場合）
