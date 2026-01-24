@@ -41,12 +41,9 @@ struct MatchingScene
     Network *network;  // SceneManager が所有、ポインタで参照
     EZ_2D_Font font;
 
-    // 3D 背景（タイトルと同じ）
     EZ_Shader shader;
     EZ_Camera camera;
     EZ_Light light;
-    EZ_Object court_object;
-    float court_rotation;
 
     // 接続状態
     MatchingPhase phase;

@@ -43,7 +43,7 @@ static void update_joycon_phase(MatchingScene *scene)
     else
     {
         LOG_WARN("マッチングシーン: Joy-Con 接続失敗、リトライ待機");
-        scene->status_message = "接続に失敗しました。再試行中";
+        scene->status_message = "Joy-Conに接続中";
         scene->last_attempt_failed = true;
         scene->retry_wait_frames = RETRY_WAIT_FRAMES;
     }
@@ -82,7 +82,7 @@ static void update_server_phase(MatchingScene *scene)
     else
     {
         LOG_WARN("マッチングシーン: サーバー接続失敗、リトライ待機");
-        scene->status_message = "サーバーに接続できませんでした。再試行中";
+        scene->status_message = "サーバに接続中";
         scene->last_attempt_failed = true;
         scene->retry_wait_frames = RETRY_WAIT_FRAMES;
     }
@@ -158,17 +158,6 @@ bool matching_scene_init(MatchingScene *scene)
     scene->light = EZ_CreateLight();
     EZ_LightSetPosition(scene->light, 10.0f, 20.0f, 10.0f);
 
-    // テニスコートオブジェクト読み込み
-    scene->court_object = EZ_CreateObject("obj/tennis_court.obj", "img/container.jpeg");
-    if (scene->court_object == nullptr)
-    {
-        LOG_ERROR("マッチングシーン: テニスコートオブジェクトの作成に失敗しました");
-        return false;
-    }
-    EZ_ObjectSetPosition(scene->court_object, 0.0f, 0.0f, 0.0f);
-    EZ_ObjectSetScale(scene->court_object, TENNIS_COURT_SCALE, TENNIS_COURT_SCALE,
-                      TENNIS_COURT_SCALE);
-
     // オーディオ初期化
     if (!audio_init(&scene->audio))
     {
@@ -180,7 +169,6 @@ bool matching_scene_init(MatchingScene *scene)
     scene->se_decide = audio_load_se(&scene->audio, "audio/se/select.mp3");
 
     // 変数初期化
-    scene->court_rotation = 0.0f;
     scene->phase = MATCHING_PHASE_JOYCON;
     scene->retry_count = 0;
     scene->retry_wait_frames = 0;
@@ -195,14 +183,6 @@ bool matching_scene_init(MatchingScene *scene)
 
 MatchingResult matching_scene_update(MatchingScene *scene)
 {
-    // コート回転更新
-    scene->court_rotation += COURT_ROTATION_SPEED;
-    if (scene->court_rotation >= 360.0f)
-    {
-        scene->court_rotation -= 360.0f;
-    }
-    EZ_ObjectSetRotation(scene->court_object, 0.0f, scene->court_rotation, 0.0f);
-
     // ドットアニメーション更新
     scene->dot_animation_counter++;
     if (scene->dot_animation_counter >= DOT_ANIMATION_INTERVAL * 4)
@@ -245,12 +225,6 @@ void matching_scene_draw(MatchingScene *scene)
     glClearColor(0.85f, 0.78f, 0.65f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // 3D 描画（深度テスト有効）
-    glEnable(GL_DEPTH_TEST);
-
-    // コート描画
-    EZ_DrawObject(scene->court_object, scene->shader, scene->camera, scene->light);
-
     // 2D 描画
     float screen_width = static_cast<float>(scene->context->window_width);
     float screen_height = static_cast<float>(scene->context->window_height);
@@ -270,18 +244,6 @@ void matching_scene_draw(MatchingScene *scene)
 
         EZ_2D_DrawText(scene->font, x, y, message_with_dots, STATUS_FONT_SIZE, 0.3f, 0.2f, 0.1f,
                        1.0f);
-    }
-
-    // リトライ回数表示（失敗時）
-    if (scene->last_attempt_failed && scene->retry_count > 0)
-    {
-        char retry_text[64];
-        snprintf(retry_text, sizeof(retry_text), "リトライ: %d回", scene->retry_count);
-
-        float x = screen_width / 2.0f - 80.0f;
-        float y = screen_height / 2.0f + 50.0f;
-
-        EZ_2D_DrawText(scene->font, x, y, retry_text, 24.0f, 0.5f, 0.4f, 0.3f, 1.0f);
     }
 }
 
