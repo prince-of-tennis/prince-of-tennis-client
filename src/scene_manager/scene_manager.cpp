@@ -119,6 +119,7 @@ static void fini_scene(unique_ptr<SceneManager> &mgr)
 
         case SCENE_GAME:
             LOG_DEBUG("SCENE_GAMEを終了します。");
+            game_scene_fini(&mgr->game_scene);
             break;
 
         default:

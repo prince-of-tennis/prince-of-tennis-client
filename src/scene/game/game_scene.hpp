@@ -106,6 +106,10 @@ struct GameScene
 /// @param network SceneManager が所有する Network（マッチング済み）
 bool game_scene_init(GameScene *scene, Network *network);
 
+/// @brief ゲームシーンの終了処理
+/// @param scene ゲームシーン
+void game_scene_fini(GameScene *scene);
+
 bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing *player_swing);
 
 void game_scene_draw(GameScene *scene);

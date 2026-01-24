@@ -267,9 +267,6 @@ void title_scene_draw(TitleScene *scene)
 
 void title_scene_fini(TitleScene *scene)
 {
-    // フォント解放
-    scene->font.reset();
-
     // オーディオ終了
     audio_fini(&scene->audio);
 

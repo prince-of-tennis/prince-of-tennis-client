@@ -146,6 +146,20 @@ bool game_scene_init(GameScene *scene, Network *network)
     return true;
 }
 
+void game_scene_fini(GameScene *scene)
+{
+    LOG_DEBUG("GameScene終了処理開始");
+
+    // オーディオの終了処理
+    audio_fini(&scene->audio);
+
+    // networkはSceneManagerが所有しているため、unique_ptrから所有権を放棄する
+    // （deleteしない）
+    scene->network.release();
+
+    LOG_DEBUG("GameScene終了処理完了");
+}
+
 bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing *player_swing)
 {
     if (!network_listen_to_server(scene->network.get()))

@@ -14,14 +14,15 @@ struct AbilityManager
     // ボタン押下状態（能力ごと）
     bool button_held[ABILITY_MAX];
 
+    // スイング時のボタン押下状態（打撃検出用にバッファリング）
+    // 打撃検出はサーバーからの遅延があるため、スイング時の状態を保持
+    bool swing_button_held[ABILITY_MAX];
+
     // ローカル能力状態（クライアント側で管理する能力用）
     AbilityState local_states[ABILITY_MAX];
 
     // サーバーから受信した能力状態（プレイヤーごと）
     AbilityState server_states[ABILITY_PLAYER_MAX];
-
-    // クールダウン（能力ごと、フレーム数）
-    uint32_t cooldowns[ABILITY_MAX];
 
     // 発動リクエストバッファ
     AbilityActivateRequest pending_request;
