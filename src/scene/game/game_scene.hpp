@@ -101,7 +101,10 @@ struct GameScene
     AbilityManager ability_manager;
 };
 
-bool game_scene_init(GameScene *scene);
+/// @brief ゲームシーンの初期化
+/// @param scene ゲームシーン
+/// @param network SceneManager が所有する Network（マッチング済み）
+bool game_scene_init(GameScene *scene, Network *network);
 
 bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing *player_swing);
 

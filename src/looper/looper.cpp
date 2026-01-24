@@ -2,6 +2,7 @@
 
 #include "common/player_input.h"
 #include "core/context.hpp"
+#include "input/input_manager.hpp"
 #include "joycon/joycon.hpp"
 #include "opengl/2d/EZ_2d.h"
 #include "opengl/EasyGL.hpp"
@@ -88,13 +89,19 @@ bool looper_init(Looper *looper, eSceneType default_scene)
         return false;
     }
 
-    // Joycon初期化
-    if (!joycon_init(&looper->joycon)) return false;
+    // InputManager初期化
+    input_manager_init();
+
+    // Joy-Con はマッチングシーンで初期化されるため、ここでは初期化しない
+    // Joycon 構造体だけ初期化
+    memset(&looper->joycon, 0, sizeof(Joycon));
 
     // SceneManager初期化
     looper->scene_manager = make_unique<SceneManager>();
     looper->scene_manager->context = &g_context;
     looper->scene_manager->joycon = &looper->joycon;
+    looper->scene_manager->joycon_initialized = false;
+    looper->scene_manager->network_initialized = false;
     if (!scene_manager_init(looper->scene_manager, default_scene))
     {
         LOG_ERROR("シーンの初期化に失敗しました");
@@ -112,20 +119,29 @@ void loop(Looper *looper)
     {
         fps_frame_start();
 
-        PlayerInput player_input = get_joycon(&looper->joycon, g_context.player_id);
+        PlayerInput player_input = {};
+        PlayerSwing player_swing = {};
+        bool has_movement_input = false;
+        bool should_send_swing = false;
 
-        // ボタン状態を更新
-        joycon_update_buttons(&looper->joycon);
+        // Joy-Con が初期化されている場合のみ入力を取得
+        if (looper->scene_manager->joycon_initialized)
+        {
+            player_input = get_joycon(&looper->joycon, g_context.player_id);
 
-        // 移動入力があるかチェック（どれか一つでもtrueなら入力あり）
-        bool has_movement_input =
-            player_input.left || player_input.right || player_input.front || player_input.back;
+            // ボタン状態を更新
+            joycon_update_buttons(&looper->joycon);
 
-        // スイングデータを取得
-        PlayerSwing player_swing = get_joycon_swing(&looper->joycon, g_context.player_id);
+            // 移動入力があるかチェック（どれか一つでもtrueなら入力あり）
+            has_movement_input =
+                player_input.left || player_input.right || player_input.front || player_input.back;
 
-        // スイング動作が閾値を超えたかチェック
-        bool should_send_swing = joycon_has_significant_swing(&looper->joycon, &player_swing);
+            // スイングデータを取得
+            player_swing = get_joycon_swing(&looper->joycon, g_context.player_id);
+
+            // スイング動作が閾値を超えたかチェック
+            should_send_swing = joycon_has_significant_swing(&looper->joycon, &player_swing);
+        }
 
         // イベント処理
         is_running = window_manager_update();
@@ -163,7 +179,13 @@ void looper_fini(Looper *looper)
 {
     scene_manager_fini(looper->scene_manager);
     window_manager_fini();
-    joycon_fini(&looper->joycon);
+
+    // Joy-Con が初期化されている場合のみ終了処理
+    if (looper->scene_manager->joycon_initialized)
+    {
+        joycon_fini(&looper->joycon);
+    }
+
     SDL_Quit();
     LOG_SUCCESS("SDLを終了しました");
 }

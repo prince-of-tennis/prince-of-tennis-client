@@ -20,15 +20,24 @@ static bool init_scene(unique_ptr<SceneManager> &mgr)
         case SCENE_TITLE:
             LOG_DEBUG("SCENE_TITLEを初期化します。");
             mgr->title_scene.context = mgr->context;
-            mgr->title_scene.joycon = mgr->joycon;
+            mgr->title_scene.joycon = mgr->joycon_initialized ? mgr->joycon : nullptr;
             return title_scene_init(&mgr->title_scene);
+
+        case SCENE_MATCHING:
+            LOG_DEBUG("SCENE_MATCHINGを初期化します。");
+            mgr->matching_scene.context = mgr->context;
+            mgr->matching_scene.joycon = mgr->joycon;
+            mgr->matching_scene.network = &mgr->network;
+            mgr->matching_scene.joycon_initialized_ptr = &mgr->joycon_initialized;
+            mgr->matching_scene.network_initialized_ptr = &mgr->network_initialized;
+            return matching_scene_init(&mgr->matching_scene);
 
         case SCENE_GAME:
             LOG_DEBUG("SCENE_GAMEを初期化します。");
-
             mgr->game_scene.context = mgr->context;
             mgr->game_scene.joycon = mgr->joycon;
-            return game_scene_init(&mgr->game_scene);
+            // Network は SceneManager から渡す
+            return game_scene_init(&mgr->game_scene, &mgr->network);
 
         default:
             LOG_ERROR("不正なシーンが渡されました。");
@@ -51,9 +60,28 @@ bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput *player_input,
             switch (result)
             {
                 case TITLE_RESULT_START:
-                    return scene_change(mgr, SCENE_GAME);
+                    // マッチングシーンへ遷移
+                    return scene_change(mgr, SCENE_MATCHING);
                 case TITLE_RESULT_EXIT:
                     return false;
+                default:
+                    return true;
+            }
+        }
+
+        case SCENE_MATCHING:
+        {
+            MatchingResult result = matching_scene_update(&mgr->matching_scene);
+            matching_scene_draw(&mgr->matching_scene);
+
+            switch (result)
+            {
+                case MATCHING_RESULT_SUCCESS:
+                    // ゲームシーンへ遷移
+                    return scene_change(mgr, SCENE_GAME);
+                case MATCHING_RESULT_CANCEL:
+                    // タイトルへ戻る
+                    return scene_change(mgr, SCENE_TITLE);
                 default:
                     return true;
             }
@@ -83,6 +111,12 @@ static void fini_scene(unique_ptr<SceneManager> &mgr)
             LOG_DEBUG("SCENE_TITLEを終了します。");
             title_scene_fini(&mgr->title_scene);
             break;
+
+        case SCENE_MATCHING:
+            LOG_DEBUG("SCENE_MATCHINGを終了します。");
+            matching_scene_fini(&mgr->matching_scene);
+            break;
+
         case SCENE_GAME:
             LOG_DEBUG("SCENE_GAMEを終了します。");
             break;

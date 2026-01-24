@@ -18,9 +18,12 @@ static int get_player_score(const GameScore &score, int player_id)
     return (player_id == 0) ? score.current_game_p1 : score.current_game_p2;
 }
 
-bool game_scene_init(GameScene *scene)
+bool game_scene_init(GameScene *scene, Network *network)
 {
     LOG_DEBUG("GameScene初期化開始");
+
+    // Network は SceneManager から渡される（既にマッチング済み）
+    scene->network.reset(network);
 
     // シェーダー初期化
     scene->shader = EZ_CreateShader();
@@ -96,36 +99,7 @@ bool game_scene_init(GameScene *scene)
     // ライト初期化
     scene->light = EZ_CreateLight();
 
-    // Network
-    scene->network.reset(new Network);
-    if (!network_init(scene->network.get(), scene->context))
-    {
-        return false;
-    }
-
-    // サーバーからプレイヤーIDを受信（ゲーム開始時）
-    LOG_DEBUG("プレイヤーID受信待機中...");
-    const Uint32 TIMEOUT_MS = 5000;  // 5秒タイムアウト
-
-    while (true)
-    {
-        if (!network_listen_to_server(scene->network.get()))
-        {
-            LOG_ERROR("プレイヤーID受信中にエラーが発生しました");
-            return false;
-        }
-
-        // プレイヤーIDが設定されたか確認
-        if (scene->context->player_id != -1)
-        {
-            LOG_SUCCESS("プレイヤーID受信完了: " << scene->context->player_id);
-            break;
-        }
-
-        SDL_Delay(10);  // CPU負荷軽減
-    }
-
-    // カメラ初期化（player_id受信後）
+    // カメラ初期化（player_id は既にマッチングシーンで受信済み）
     scene->camera = EZ_CreateCamera(static_cast<float>(scene->context->window_width) /
                                     static_cast<float>(scene->context->window_height));
 

@@ -1,6 +1,7 @@
 #include "title_scene.hpp"
 
 #include "glad/glad.h"
+#include "input/input_manager.hpp"
 #include "util/log.hpp"
 
 // テニスコートスケール（game_sceneと同じ）
@@ -107,17 +108,60 @@ TitleSceneResult title_scene_update(TitleScene *scene)
     }
 
     // 入力処理（フェードイン完了後のみ）
-    if (scene->fade_in_complete && scene->joycon != nullptr)
+    if (scene->fade_in_complete)
     {
-        // スティック入力の閾値
-        constexpr float STICK_THRESHOLD = 0.5f;
+        bool menu_up = false;
+        bool menu_down = false;
+        bool menu_select = false;
 
-        // 現在のスティック状態を取得
-        bool stick_up = scene->joycon->joycon.stick.y > STICK_THRESHOLD;
-        bool stick_down = scene->joycon->joycon.stick.y < -STICK_THRESHOLD;
+        // Joy-Con 入力
+        if (scene->joycon != nullptr)
+        {
+            // スティック入力の閾値
+            constexpr float STICK_THRESHOLD = 0.5f;
 
-        // 上方向のエッジ検出（今押された瞬間）
-        if (stick_up && !scene->prev_stick_up)
+            // 現在のスティック状態を取得
+            bool stick_up = scene->joycon->joycon.stick.y > STICK_THRESHOLD;
+            bool stick_down = scene->joycon->joycon.stick.y < -STICK_THRESHOLD;
+
+            // 上方向のエッジ検出（今押された瞬間）
+            if (stick_up && !scene->prev_stick_up)
+            {
+                menu_up = true;
+            }
+            // 下方向のエッジ検出（今押された瞬間）
+            if (stick_down && !scene->prev_stick_down)
+            {
+                menu_down = true;
+            }
+
+            // スティック状態を保存
+            scene->prev_stick_up = stick_up;
+            scene->prev_stick_down = stick_down;
+
+            // A ボタンで決定
+            if (joycon_is_just_pressed(scene->joycon, JOYCON_BTN_A))
+            {
+                menu_select = true;
+            }
+        }
+
+        // キーボード入力
+        if (input_is_key_just_pressed(KEY_UP))
+        {
+            menu_up = true;
+        }
+        if (input_is_key_just_pressed(KEY_DOWN))
+        {
+            menu_down = true;
+        }
+        if (input_is_key_just_pressed(KEY_ENTER))
+        {
+            menu_select = true;
+        }
+
+        // メニュー上移動
+        if (menu_up)
         {
             scene->selected_menu--;
             if (scene->selected_menu < 0)
@@ -129,8 +173,9 @@ TitleSceneResult title_scene_update(TitleScene *scene)
                 audio_play_se(&scene->audio, scene->se_cursor_move);
             }
         }
-        // 下方向のエッジ検出（今押された瞬間）
-        else if (stick_down && !scene->prev_stick_down)
+
+        // メニュー下移動
+        if (menu_down)
         {
             scene->selected_menu++;
             if (scene->selected_menu >= MENU_ITEM_COUNT)
@@ -143,12 +188,8 @@ TitleSceneResult title_scene_update(TitleScene *scene)
             }
         }
 
-        // スティック状態を保存
-        scene->prev_stick_up = stick_up;
-        scene->prev_stick_down = stick_down;
-
-        // Aボタンで決定
-        if (joycon_is_just_pressed(scene->joycon, JOYCON_BTN_A))
+        // メニュー決定
+        if (menu_select)
         {
             if (scene->se_decide >= 0)
             {
@@ -163,6 +204,8 @@ TitleSceneResult title_scene_update(TitleScene *scene)
                 case MENU_EXIT:
                     LOG_DEBUG("タイトルシーン: 「おわる」が選択されました");
                     return TITLE_RESULT_EXIT;
+                default:
+                    break;
             }
         }
     }
