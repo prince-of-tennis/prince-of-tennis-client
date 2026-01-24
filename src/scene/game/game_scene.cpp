@@ -18,9 +18,12 @@ static int get_player_score(const GameScore &score, int player_id)
     return (player_id == 0) ? score.current_game_p1 : score.current_game_p2;
 }
 
-bool game_scene_init(GameScene *scene)
+bool game_scene_init(GameScene *scene, Network *network)
 {
     LOG_DEBUG("GameScene初期化開始");
+
+    // Network は SceneManager から渡される（既にマッチング済み）
+    scene->network.reset(network);
 
     // シェーダー初期化
     scene->shader = EZ_CreateShader();
@@ -83,7 +86,7 @@ bool game_scene_init(GameScene *scene)
     LOG_SUCCESS("テニスコートオブジェクト初期化完了");
 
     // グラウンドオブジェクトの初期化
-    scene->ground_object = EZ_CreateObject("obj/ground.obj", "img/container.jpeg");
+    scene->ground_object = EZ_CreateObject("obj/ground.obj", "img/ground.png");
     if (scene->ground_object == nullptr)
     {
         LOG_ERROR("グラウンドオブジェクトの作成に失敗しました");
@@ -96,36 +99,7 @@ bool game_scene_init(GameScene *scene)
     // ライト初期化
     scene->light = EZ_CreateLight();
 
-    // Network
-    scene->network.reset(new Network);
-    if (!network_init(scene->network.get(), scene->context))
-    {
-        return false;
-    }
-
-    // サーバーからプレイヤーIDを受信（ゲーム開始時）
-    LOG_DEBUG("プレイヤーID受信待機中...");
-    const Uint32 TIMEOUT_MS = 5000;  // 5秒タイムアウト
-
-    while (true)
-    {
-        if (!network_listen_to_server(scene->network.get()))
-        {
-            LOG_ERROR("プレイヤーID受信中にエラーが発生しました");
-            return false;
-        }
-
-        // プレイヤーIDが設定されたか確認
-        if (scene->context->player_id != -1)
-        {
-            LOG_SUCCESS("プレイヤーID受信完了: " << scene->context->player_id);
-            break;
-        }
-
-        SDL_Delay(10);  // CPU負荷軽減
-    }
-
-    // カメラ初期化（player_id受信後）
+    // カメラ初期化（player_id は既にマッチングシーンで受信済み）
     scene->camera = EZ_CreateCamera(static_cast<float>(scene->context->window_width) /
                                     static_cast<float>(scene->context->window_height));
 
@@ -187,11 +161,11 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
                          scene->ball_data.point.z);
 
     // ボール打撃検出（hit_countが増加したらSE再生）
-    if (scene->ball_data.hit_count > scene->prev_hit_count)
+    bool ball_hit_detected = (scene->ball_data.hit_count > scene->prev_hit_count);
+    if (ball_hit_detected)
     {
         audio_play_se(&scene->audio, scene->se_hit_ball);
     }
-    scene->prev_hit_count = scene->ball_data.hit_count;
 
     // スコアデータの更新
     scene->game_score = scene->network->network_data_set.game_score;
@@ -221,6 +195,18 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
         scene->player_data[i] = scene->network->network_data_set.players[i];
         EZ_ObjectSetPosition(scene->player_objects[i], scene->player_data[i].point.x,
                              scene->player_data[i].point.y, scene->player_data[i].point.z);
+
+        // #86: でかすぎんだろ - サーバーから受信した能力状態でスケール変更
+        const AbilityState& ability_state = scene->network->network_data_set.ability_states[i];
+        bool is_giant = (ability_state.active_ability == ABILITY_GIANT && ability_state.remaining_frames > 0);
+        if (is_giant)
+        {
+            EZ_ObjectSetScale(scene->player_objects[i], 10.0f, 10.0f, 10.0f);
+        }
+        else
+        {
+            EZ_ObjectSetScale(scene->player_objects[i], 1.0f, 1.0f, 1.0f);
+        }
     }
 
     // カメラ追従処理（自分のプレイヤーに追従）
@@ -242,6 +228,19 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
         game_scene_send_ability_request(scene, instant_req);
     }
 
+    // #86: でかすぎんだろ - Xボタン状態変化をサーバーに送信
+    static bool prev_giant_button = false;
+    bool curr_giant_button = scene->ability_manager.button_held[ABILITY_GIANT];
+    if (curr_giant_button != prev_giant_button)
+    {
+        AbilityActivateRequest giant_req;
+        giant_req.player_id = my_id;
+        giant_req.ability_type = ABILITY_GIANT;
+        giant_req.trigger = curr_giant_button ? TRIGGER_INSTANT : TRIGGER_ON_HIT; // ON_HIT=解除の意味で流用
+        game_scene_send_ability_request(scene, &giant_req);
+        prev_giant_button = curr_giant_button;
+    }
+
     // スイング時発動能力のチェック（スイングが送信される場合）
     if (player_swing != nullptr)
     {
@@ -253,7 +252,7 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
     }
 
     // 打撃時発動能力のチェック（ボールを打った場合）
-    if (scene->ball_data.hit_count > scene->prev_hit_count)
+    if (ball_hit_detected)
     {
         AbilityActivateRequest* hit_req = ability_check_on_hit(&scene->ability_manager, my_id);
         if (hit_req)
@@ -264,6 +263,9 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
 
     // 能力フレームカウント更新
     ability_manager_tick(&scene->ability_manager);
+
+    // 打撃カウントを更新（次フレーム用）
+    scene->prev_hit_count = scene->ball_data.hit_count;
 
     return true;
 }
@@ -288,6 +290,17 @@ void game_scene_draw(GameScene *scene)
 
     // ボールの描画（#88: ABILITY_INVISIBLE_BALL がアクティブなら描画しない）
     bool ball_invisible = ability_is_local_active(&scene->ability_manager, ABILITY_INVISIBLE_BALL);
+    if (ball_invisible)
+    {
+        // 発動中のフレーム数をログ出力（デバッグ用）
+        uint32_t remaining = scene->ability_manager.local_states[ABILITY_INVISIBLE_BALL].remaining_frames;
+        static uint32_t last_remaining = 0;
+        if (remaining != last_remaining)
+        {
+            LOG_DEBUG("ボール消える発動中: 残り" << remaining << "frames");
+            last_remaining = remaining;
+        }
+    }
     if (scene->ball_object && !ball_invisible)
     {
         EZ_DrawObject(scene->ball_object, scene->shader, scene->camera, scene->light);

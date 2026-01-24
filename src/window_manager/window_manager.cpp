@@ -1,5 +1,6 @@
 #include "window_manager.hpp"
 
+#include "input/input_manager.hpp"
 #include "util/log.hpp"
 
 static WindowManager g_window_mgr;
@@ -21,6 +22,9 @@ bool window_manager_init(Context *context)
 
 SDL_bool window_manager_update()
 {
+    // 前フレームの入力状態を保存
+    input_manager_update();
+
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
@@ -29,7 +33,9 @@ SDL_bool window_manager_update()
             LOG_DEBUG("終了イベントを受信しました");
             return SDL_FALSE;
         }
-        // TODO: EventManagerに処理を委譲
+
+        // キーボードイベントを InputManager に渡す
+        input_manager_handle_event(event);
     }
     return SDL_TRUE;
 }

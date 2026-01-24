@@ -8,7 +8,9 @@
 #include "common/player_swing.h"
 #include "core/context.hpp"
 #include "joycon/joycon.hpp"
+#include "network/network.hpp"
 #include "scene/game/game_scene.hpp"
+#include "scene/matching/matching_scene.hpp"
 #include "scene/title/title_scene.hpp"
 #include "scene_type.hpp"
 
@@ -20,8 +22,16 @@ struct SceneManager
     Context *context;
     Joycon *joycon;
     TitleScene title_scene;
+    MatchingScene matching_scene;
     GameScene game_scene;
     PlayerInput player_input;
+
+    // SceneManager が所有する Network
+    Network network;
+
+    // 初期化フラグ
+    bool joycon_initialized;
+    bool network_initialized;
 };
 
 /// @brief scene_managerの初期化
