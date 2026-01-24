@@ -4,7 +4,7 @@
 #include "util/log.hpp"
 
 // テニスコートスケール（game_sceneと同じ）
-constexpr float TENNIS_COURT_SCALE = 0.05f;
+constexpr float TENNIS_COURT_SCALE = 0.2f;
 
 bool title_scene_init(TitleScene *scene)
 {
@@ -47,16 +47,6 @@ bool title_scene_init(TitleScene *scene)
     EZ_ObjectSetScale(scene->court_object, TENNIS_COURT_SCALE, TENNIS_COURT_SCALE,
                       TENNIS_COURT_SCALE);
 
-    // グラウンドオブジェクト読み込み
-    scene->ground_object = EZ_CreateObject("obj/ground.obj", "img/ground.png");
-    if (scene->ground_object == nullptr)
-    {
-        LOG_ERROR("タイトルシーン: グラウンドオブジェクトの作成に失敗しました");
-        return false;
-    }
-    EZ_ObjectSetPosition(scene->ground_object, 0.0f, 0.0f, 0.0f);
-    EZ_ObjectSetScale(scene->ground_object, 1.0f, 1.0f, 1.0f);
-
     // オーディオ初期化
     if (!audio_init(&scene->audio))
     {
@@ -65,8 +55,8 @@ bool title_scene_init(TitleScene *scene)
     }
 
     // SE読み込み
-    scene->se_cursor_move = audio_load_se(&scene->audio, "audio/hit_ball.mp3");
-    scene->se_decide = audio_load_se(&scene->audio, "audio/yatta.mp3");
+    scene->se_cursor_move = audio_load_se(&scene->audio, "audio/se/move_cursor.mp3");
+    scene->se_decide = audio_load_se(&scene->audio, "audio/se/select.mp3");
 
     // 変数初期化
     scene->blink_counter = 0;
@@ -182,15 +172,12 @@ TitleSceneResult title_scene_update(TitleScene *scene)
 
 void title_scene_draw(TitleScene *scene)
 {
-    // 背景を暗めの青緑でクリア
-    glClearColor(0.05f, 0.1f, 0.15f, 1.0f);
+    // 背景をセピア調（古い紙風）でクリア
+    glClearColor(0.85f, 0.78f, 0.65f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // 3D描画（深度テスト有効）
     glEnable(GL_DEPTH_TEST);
-
-    // グラウンド描画
-    EZ_DrawObject(scene->ground_object, scene->shader, scene->camera, scene->light);
 
     // コート描画（回転適用済み）
     EZ_DrawObject(scene->court_object, scene->shader, scene->camera, scene->light);
@@ -217,10 +204,10 @@ void title_scene_draw(TitleScene *scene)
         {
             float menu_y = MENU_START_Y + i * MENU_ITEM_SPACING;
 
-            // 選択中のメニューは色を変える
-            float r = (i == scene->selected_menu) ? 1.0f : 0.7f;
-            float g = (i == scene->selected_menu) ? 1.0f : 0.7f;
-            float b = (i == scene->selected_menu) ? 0.0f : 0.7f;
+            // 選択中のメニューは色を変える（こげ茶 / グレー）
+            float r = (i == scene->selected_menu) ? 0.4f : 0.5f;
+            float g = (i == scene->selected_menu) ? 0.25f : 0.45f;
+            float b = (i == scene->selected_menu) ? 0.1f : 0.4f;
 
             // カーソル（▶）
             if (i == scene->selected_menu)

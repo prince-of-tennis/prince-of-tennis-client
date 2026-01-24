@@ -53,7 +53,6 @@ struct TitleScene
     EZ_Camera camera;
     EZ_Light light;
     EZ_Object court_object;
-    EZ_Object ground_object;
     float court_rotation;
 
     // アニメーション
