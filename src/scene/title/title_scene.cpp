@@ -3,8 +3,12 @@
 #include "glad/glad.h"
 #include "util/log.hpp"
 
+// テニスコートスケール（game_sceneと同じ）
+constexpr float TENNIS_COURT_SCALE = 0.05f;
+
 bool title_scene_init(TitleScene *scene)
 {
+    // フォント読み込み
     scene->font = EZ_2D_CreateFont("fonts/font.otf", 48);
     if (!scene->font)
     {
@@ -12,15 +16,98 @@ bool title_scene_init(TitleScene *scene)
         return false;
     }
 
+    // 3Dシェーダー初期化
+    scene->shader = EZ_CreateShader();
+    if (scene->shader == nullptr)
+    {
+        LOG_ERROR("タイトルシーン: シェーダーの作成に失敗しました");
+        return false;
+    }
+
+    // カメラ初期化（俯瞰視点）
+    float aspect_ratio = static_cast<float>(scene->context->window_width) /
+                         static_cast<float>(scene->context->window_height);
+    scene->camera = EZ_CreateCamera(aspect_ratio);
+    EZ_CameraSetPosition(scene->camera, 0.0f, 15.0f, 25.0f);
+    EZ_CameraSetTargetPosition(scene->camera, 0.0f, 0.0f, 0.0f);
+    EZ_CameraSetClipPlanes(scene->camera, 0.1f, 200.0f);
+
+    // ライト初期化
+    scene->light = EZ_CreateLight();
+    EZ_LightSetPosition(scene->light, 10.0f, 20.0f, 10.0f);
+
+    // テニスコートオブジェクト読み込み
+    scene->court_object = EZ_CreateObject("obj/tennis_court.obj", "img/container.jpeg");
+    if (scene->court_object == nullptr)
+    {
+        LOG_ERROR("タイトルシーン: テニスコートオブジェクトの作成に失敗しました");
+        return false;
+    }
+    EZ_ObjectSetPosition(scene->court_object, 0.0f, 0.0f, 0.0f);
+    EZ_ObjectSetScale(scene->court_object, TENNIS_COURT_SCALE, TENNIS_COURT_SCALE,
+                      TENNIS_COURT_SCALE);
+
+    // グラウンドオブジェクト読み込み
+    scene->ground_object = EZ_CreateObject("obj/ground.obj", "img/ground.png");
+    if (scene->ground_object == nullptr)
+    {
+        LOG_ERROR("タイトルシーン: グラウンドオブジェクトの作成に失敗しました");
+        return false;
+    }
+    EZ_ObjectSetPosition(scene->ground_object, 0.0f, 0.0f, 0.0f);
+    EZ_ObjectSetScale(scene->ground_object, 1.0f, 1.0f, 1.0f);
+
+    // オーディオ初期化
+    if (!audio_init(&scene->audio))
+    {
+        LOG_ERROR("タイトルシーン: オーディオの初期化に失敗しました");
+        return false;
+    }
+
+    // SE読み込み
+    scene->se_cursor_move = audio_load_se(&scene->audio, "audio/hit_ball.mp3");
+    scene->se_decide = audio_load_se(&scene->audio, "audio/yatta.mp3");
+
+    // 変数初期化
     scene->blink_counter = 0;
     scene->show_start_message = true;
+    scene->court_rotation = 0.0f;
+    scene->frame_counter = 0;
+    scene->title_alpha = 0.0f;
+    scene->fade_in_complete = false;
+    scene->selected_menu = MENU_START;
+    scene->prev_stick_up = false;
+    scene->prev_stick_down = false;
 
     LOG_DEBUG("タイトルシーンを初期化しました");
     return true;
 }
 
-bool title_scene_update(TitleScene *scene)
+TitleSceneResult title_scene_update(TitleScene *scene)
 {
+    // フレームカウンター更新
+    scene->frame_counter++;
+
+    // フェードインアニメーション
+    if (!scene->fade_in_complete)
+    {
+        scene->title_alpha =
+            static_cast<float>(scene->frame_counter) / static_cast<float>(FADE_IN_FRAMES);
+        if (scene->title_alpha >= 1.0f)
+        {
+            scene->title_alpha = 1.0f;
+            scene->fade_in_complete = true;
+        }
+    }
+
+    // コート回転更新
+    scene->court_rotation += COURT_ROTATION_SPEED;
+    if (scene->court_rotation >= 360.0f)
+    {
+        scene->court_rotation -= 360.0f;
+    }
+    EZ_ObjectSetRotation(scene->court_object, 0.0f, scene->court_rotation, 0.0f);
+
     // 点滅アニメーション更新
     scene->blink_counter++;
     if (scene->blink_counter >= BLINK_INTERVAL)
@@ -29,45 +116,132 @@ bool title_scene_update(TitleScene *scene)
         scene->show_start_message = !scene->show_start_message;
     }
 
-    // Aボタンが押された瞬間にシーン遷移
-    if (scene->joycon != nullptr && joycon_is_just_pressed(scene->joycon, JOYCON_BTN_A))
+    // 入力処理（フェードイン完了後のみ）
+    if (scene->fade_in_complete && scene->joycon != nullptr)
     {
-        LOG_DEBUG("タイトルシーン: Aボタン入力を検出、ゲームシーンに遷移します");
-        return true;
+        // スティック入力の閾値
+        constexpr float STICK_THRESHOLD = 0.5f;
+
+        // 現在のスティック状態を取得
+        bool stick_up = scene->joycon->joycon.stick.y > STICK_THRESHOLD;
+        bool stick_down = scene->joycon->joycon.stick.y < -STICK_THRESHOLD;
+
+        // 上方向のエッジ検出（今押された瞬間）
+        if (stick_up && !scene->prev_stick_up)
+        {
+            scene->selected_menu--;
+            if (scene->selected_menu < 0)
+            {
+                scene->selected_menu = MENU_ITEM_COUNT - 1;
+            }
+            if (scene->se_cursor_move >= 0)
+            {
+                audio_play_se(&scene->audio, scene->se_cursor_move);
+            }
+        }
+        // 下方向のエッジ検出（今押された瞬間）
+        else if (stick_down && !scene->prev_stick_down)
+        {
+            scene->selected_menu++;
+            if (scene->selected_menu >= MENU_ITEM_COUNT)
+            {
+                scene->selected_menu = 0;
+            }
+            if (scene->se_cursor_move >= 0)
+            {
+                audio_play_se(&scene->audio, scene->se_cursor_move);
+            }
+        }
+
+        // スティック状態を保存
+        scene->prev_stick_up = stick_up;
+        scene->prev_stick_down = stick_down;
+
+        // Aボタンで決定
+        if (joycon_is_just_pressed(scene->joycon, JOYCON_BTN_A))
+        {
+            if (scene->se_decide >= 0)
+            {
+                audio_play_se(&scene->audio, scene->se_decide);
+            }
+
+            switch (scene->selected_menu)
+            {
+                case MENU_START:
+                    LOG_DEBUG("タイトルシーン: 「はじめる」が選択されました");
+                    return TITLE_RESULT_START;
+                case MENU_EXIT:
+                    LOG_DEBUG("タイトルシーン: 「おわる」が選択されました");
+                    return TITLE_RESULT_EXIT;
+            }
+        }
     }
 
-    return false;
+    return TITLE_RESULT_NONE;
 }
 
 void title_scene_draw(TitleScene *scene)
 {
-    // 背景を黒でクリア
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    // 背景を暗めの青緑でクリア
+    glClearColor(0.05f, 0.1f, 0.15f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // 3D描画（深度テスト有効）
+    glEnable(GL_DEPTH_TEST);
+
+    // グラウンド描画
+    EZ_DrawObject(scene->ground_object, scene->shader, scene->camera, scene->light);
+
+    // コート描画（回転適用済み）
+    EZ_DrawObject(scene->court_object, scene->shader, scene->camera, scene->light);
+
+    // 2D描画（深度テスト無効）
+    // glDisable(GL_DEPTH_TEST);
 
     float screen_width = static_cast<float>(scene->context->window_width);
     float screen_height = static_cast<float>(scene->context->window_height);
 
-    // タイトルテキストを中央に描画
     const char *title_text = "超次元テニス";
-    float title_x = screen_width / 2.0f - 300.0f;
-    float title_y = screen_height * 0.3f;
+    float title_x = screen_width / 2.0f - 220.0f;
+    float title_y = screen_height * 0.15f;
     EZ_2D_DrawText(scene->font, title_x, title_y, title_text, TITLE_FONT_SIZE, 1.0f, 1.0f, 1.0f,
-                   1.0f);
+                   scene->title_alpha);
 
-    // 開始メッセージ（点滅）
-    if (scene->show_start_message)
+    // メニュー項目（フェードイン完了後のみ表示）
+    if (scene->fade_in_complete)
     {
-        const char *start_text = "Press A";
-        float start_x = screen_width / 2.0f - 200.0f;
-        float start_y = screen_height * 0.6f;
-        EZ_2D_DrawText(scene->font, start_x, start_y, start_text, START_MSG_FONT_SIZE, 0.8f, 0.8f,
-                       0.8f, 1.0f);
+        const char *menu_items[] = {"はじめる", "おわる"};
+        float menu_x = screen_width / 2.0f - 80.0f;
+
+        for (int i = 0; i < MENU_ITEM_COUNT; i++)
+        {
+            float menu_y = MENU_START_Y + i * MENU_ITEM_SPACING;
+
+            // 選択中のメニューは色を変える
+            float r = (i == scene->selected_menu) ? 1.0f : 0.7f;
+            float g = (i == scene->selected_menu) ? 1.0f : 0.7f;
+            float b = (i == scene->selected_menu) ? 0.0f : 0.7f;
+
+            // カーソル（▶）
+            if (i == scene->selected_menu)
+            {
+                EZ_2D_DrawText(scene->font, menu_x - 50.0f, menu_y, "▶", MENU_FONT_SIZE, r, g, b,
+                               1.0f);
+            }
+
+            EZ_2D_DrawText(scene->font, menu_x, menu_y, menu_items[i], MENU_FONT_SIZE, r, g, b,
+                           1.0f);
+        }
     }
 }
 
 void title_scene_fini(TitleScene *scene)
 {
+    // フォント解放
     scene->font.reset();
+
+    // オーディオ終了
+    audio_fini(&scene->audio);
+
     LOG_DEBUG("タイトルシーンを終了しました");
 }

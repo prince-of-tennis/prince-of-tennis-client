@@ -45,13 +45,18 @@ bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput *player_input,
     {
         case SCENE_TITLE:
         {
-            bool should_change = title_scene_update(&mgr->title_scene);
+            TitleSceneResult result = title_scene_update(&mgr->title_scene);
             title_scene_draw(&mgr->title_scene);
-            if (should_change)
+
+            switch (result)
             {
-                return scene_change(mgr, SCENE_GAME);
+                case TITLE_RESULT_START:
+                    return scene_change(mgr, SCENE_GAME);
+                case TITLE_RESULT_EXIT:
+                    return false;
+                default:
+                    return true;
             }
-            return true;
         }
 
         case SCENE_GAME:

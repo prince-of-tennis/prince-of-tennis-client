@@ -83,7 +83,7 @@ bool game_scene_init(GameScene *scene)
     LOG_SUCCESS("テニスコートオブジェクト初期化完了");
 
     // グラウンドオブジェクトの初期化
-    scene->ground_object = EZ_CreateObject("obj/ground.obj", "img/container.jpeg");
+    scene->ground_object = EZ_CreateObject("obj/ground.obj", "img/ground.png");
     if (scene->ground_object == nullptr)
     {
         LOG_ERROR("グラウンドオブジェクトの作成に失敗しました");
