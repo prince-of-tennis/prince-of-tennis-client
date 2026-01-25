@@ -137,9 +137,13 @@ bool network_handle_packet(Network *network, Packet packet)
             GameScore game_score;
             if (!packet_deserialize(packet, game_score))
             {
-                LOG_ERROR("スコアデータのデシリアライズに失敗");
+                LOG_ERROR("スコアデータのデシリアライズに失敗: packet.size="
+                          << packet.size << " expected=" << sizeof(GameScore));
                 return false;
             }
+            LOG_DEBUG("スコア受信: P1=" << game_score.point_p1 << " P2=" << game_score.point_p2
+                                        << " セット: " << game_score.sets_p1 << "-"
+                                        << game_score.sets_p2);
             network->network_data_set.game_score = game_score;
             break;
         }
@@ -161,9 +165,23 @@ bool network_handle_packet(Network *network, Packet packet)
                 return false;
             }
             network->network_data_set.ability_states[ability_state.player_id] = ability_state;
-            LOG_DEBUG("能力状態受信: player=" << ability_state.player_id
-                                              << " ability=" << static_cast<int>(ability_state.active_ability)
+            LOG_DEBUG("能力状態受信: player=" << ability_state.player_id << " ability="
+                                              << static_cast<int>(ability_state.active_ability)
                                               << " remaining=" << ability_state.remaining_frames);
+            break;
+        }
+
+        // 試合結果: 勝者ID
+        case PACKET_TYPE_MATCH_RESULT:
+        {
+            int winner_id;
+            if (!packet_deserialize(packet, winner_id))
+            {
+                LOG_ERROR("試合結果のデシリアライズに失敗");
+                return false;
+            }
+            network->network_data_set.match_winner = winner_id;
+            LOG_SUCCESS("試合結果受信: 勝者 Player " << (winner_id + 1));
             break;
         }
     }

@@ -22,7 +22,7 @@ constexpr float COURT_ROTATION_SPEED = 0.2f;
 
 // メニュー設定
 constexpr int MENU_ITEM_COUNT = 2;
-constexpr float MENU_START_Y = 400.0f;
+constexpr float MENU_START_Y = 500.0f;
 constexpr float MENU_ITEM_SPACING = 60.0f;
 
 // メニュー項目

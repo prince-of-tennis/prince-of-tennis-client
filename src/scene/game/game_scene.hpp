@@ -2,6 +2,7 @@
 
 #include "ability/ability_manager.hpp"
 #include "audio/audio.hpp"
+#include "common/GamePhase.h"
 #include "common/GameScore.h"
 #include "common/ball.h"
 #include "common/player.h"
@@ -19,6 +20,14 @@
 // 前方宣言
 struct Joycon;
 
+// ゲームシーンの結果
+enum GameSceneResult
+{
+    GAME_RESULT_CONTINUE,     // ゲーム継続
+    GAME_RESULT_FINISHED,     // ゲーム終了
+    GAME_RESULT_RETURN_TITLE  // タイトルに戻る
+};
+
 #define PLAYER_MAX 2
 
 // カメラ設定（Blenderから変換）
@@ -27,8 +36,8 @@ struct Joycon;
 // BlenderはY-up/Z-forward、OpenGLはY-up/-Z-forward
 // 変換ルール: X_gl = X_bl, Y_gl = Z_bl, Z_gl = -Y_bl
 constexpr float CAMERA_POS_X = -0.015194f;
-constexpr float CAMERA_POS_Y = 19.5f;    // 少し上から見る角度
-constexpr float CAMERA_POS_Z = 32.0f;    // 適度な距離
+constexpr float CAMERA_POS_Y = 19.5f;  // 少し上から見る角度
+constexpr float CAMERA_POS_Z = 32.0f;  // 適度な距離
 constexpr float CAMERA_TARGET_X = 0.0f;
 constexpr float CAMERA_TARGET_Y = 3.0f;  // 注視点
 constexpr float CAMERA_TARGET_Z = 0.0f;
@@ -50,6 +59,10 @@ constexpr float PLAYER_INITIAL_Z = 0.0f;
 constexpr float SCORE_OFFSET_X = 100.0f;  // 中央からのオフセット
 constexpr float SCORE_POS_Y = 50.0f;
 constexpr float SCORE_FONT_SIZE = 60.0f;
+// セット数表示設定
+constexpr float SET_SCORE_OFFSET_Y = 40.0f;  // ポイントスコアからのY方向オフセット（上寄り）
+constexpr float SET_SCORE_FONT_SIZE = 30.0f;
+constexpr float SET_SCORE_OFFSET_X = 50.0f;  // 中央からのオフセット（少し中央寄り）
 
 struct GameScene
 {
@@ -99,6 +112,11 @@ struct GameScene
 
     // 能力マネージャー
     AbilityManager ability_manager;
+
+    // ゲーム終了関連
+    bool is_game_finished;    // 試合終了フラグ
+    int winner_id;            // 勝者のプレイヤーID（-1: 未確定）
+    GamePhase current_phase;  // 現在のゲームフェーズ
 };
 
 /// @brief ゲームシーンの初期化
@@ -106,7 +124,12 @@ struct GameScene
 /// @param network SceneManager が所有する Network（マッチング済み）
 bool game_scene_init(GameScene *scene, Network *network);
 
-bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing *player_swing);
+/// @brief ゲームシーンの終了処理
+/// @param scene ゲームシーン
+void game_scene_fini(GameScene *scene);
+
+GameSceneResult game_scene_update(GameScene *scene, PlayerInput *player_input,
+                                  PlayerSwing *player_swing);
 
 void game_scene_draw(GameScene *scene);
 

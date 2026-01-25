@@ -54,15 +54,6 @@ void ability_manager_update(AbilityManager* mgr, const Joycon* joycon)
 
 void ability_manager_tick(AbilityManager* mgr)
 {
-    // クールダウンを減らす
-    for (int i = 0; i < ABILITY_MAX; ++i)
-    {
-        if (mgr->cooldowns[i] > 0)
-        {
-            mgr->cooldowns[i]--;
-        }
-    }
-
     // ローカル能力の残りフレームを減らす
     for (int i = 0; i < ABILITY_MAX; ++i)
     {
@@ -93,15 +84,6 @@ static AbilityActivateRequest* ability_try_activate(AbilityManager* mgr, int pla
             continue;
         }
 
-        // クールダウン中はスキップ
-        if (mgr->cooldowns[config.type] > 0)
-        {
-            continue;
-        }
-
-        // クールダウン開始
-        mgr->cooldowns[config.type] = config.cooldown_frames;
-
         // サーバー不要の能力はローカルで即発動
         if (!config.requires_server)
         {
@@ -126,17 +108,94 @@ static AbilityActivateRequest* ability_try_activate(AbilityManager* mgr, int pla
 
 AbilityActivateRequest* ability_check_instant(AbilityManager* mgr, int player_id)
 {
-    return ability_try_activate(mgr, player_id, TRIGGER_INSTANT);
+    for (size_t i = 0; i < ABILITY_CONFIG_COUNT; ++i)
+    {
+        const AbilityConfig& config = ABILITY_CONFIGS[i];
+
+        if (config.trigger != TRIGGER_INSTANT)
+        {
+            continue;
+        }
+
+        if (config.type == ABILITY_GIANT || config.type == ABILITY_CLONE)
+        {
+            continue;
+        }
+
+        if (!mgr->button_held[config.type])
+        {
+            continue;
+        }
+
+        if (!config.requires_server)
+        {
+            ability_activate_local(mgr, config.type);
+        }
+
+        mgr->pending_request.player_id = player_id;
+        mgr->pending_request.ability_type = config.type;
+        mgr->pending_request.trigger = TRIGGER_INSTANT;
+        mgr->has_pending_request = true;
+
+        return &mgr->pending_request;
+    }
+
+    return nullptr;
 }
 
 AbilityActivateRequest* ability_check_on_swing(AbilityManager* mgr, int player_id)
 {
+    // スイング時のボタン状態をバッファリング（打撃検出用）
+    // 打撃検出はサーバーからの遅延があるため、スイング時の状態を保持
+    for (int i = 0; i < ABILITY_MAX; ++i)
+    {
+        mgr->swing_button_held[i] = mgr->button_held[i];
+    }
+
     return ability_try_activate(mgr, player_id, TRIGGER_ON_SWING);
 }
 
 AbilityActivateRequest* ability_check_on_hit(AbilityManager* mgr, int player_id)
 {
-    return ability_try_activate(mgr, player_id, TRIGGER_ON_HIT);
+    // 打撃時発動能力のチェック（スイング時にバッファしたボタン状態を使用）
+    for (size_t i = 0; i < ABILITY_CONFIG_COUNT; ++i)
+    {
+        const AbilityConfig& config = ABILITY_CONFIGS[i];
+
+        // トリガーが一致しない場合はスキップ
+        if (config.trigger != TRIGGER_ON_HIT)
+        {
+            continue;
+        }
+
+        // スイング時にボタンが押されていなかった場合はスキップ
+        if (!mgr->swing_button_held[config.type])
+        {
+            continue;
+        }
+
+        // バッファをクリア（連続発動防止）
+        mgr->swing_button_held[config.type] = false;
+
+        // サーバー不要の能力はローカルで即発動
+        if (!config.requires_server)
+        {
+            ability_activate_local(mgr, config.type);
+        }
+
+        // リクエストを生成
+        mgr->pending_request.player_id = player_id;
+        mgr->pending_request.ability_type = config.type;
+        mgr->pending_request.trigger = TRIGGER_ON_HIT;
+        mgr->has_pending_request = true;
+
+        LOG_DEBUG("能力発動(on_hit): type=" << static_cast<int>(config.type)
+                                            << " player=" << player_id);
+
+        return &mgr->pending_request;
+    }
+
+    return nullptr;
 }
 
 bool ability_is_active(const AbilityManager* mgr, int player_id, AbilityType type)
@@ -191,7 +250,6 @@ void ability_activate_local(AbilityManager* mgr, AbilityType type)
 
     mgr->local_states[type].active_ability = type;
     mgr->local_states[type].remaining_frames = config->duration_frames;
-    mgr->local_states[type].cooldown_frames = config->cooldown_frames;
 
     LOG_DEBUG("ローカル能力発動: type=" << static_cast<int>(type)
                                         << " duration=" << config->duration_frames);

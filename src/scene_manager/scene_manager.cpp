@@ -88,12 +88,29 @@ bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput *player_input,
         }
 
         case SCENE_GAME:
-            if (!game_scene_update(&mgr->game_scene, player_input, player_swing))
-            {
-                return false;
-            }
+        {
+            GameSceneResult result =
+                game_scene_update(&mgr->game_scene, player_input, player_swing);
             game_scene_draw(&mgr->game_scene);
-            return true;
+
+            switch (result)
+            {
+                case GAME_RESULT_CONTINUE:
+                    return true;
+                case GAME_RESULT_FINISHED:
+                    if (mgr->network_initialized)
+                    {
+                        network_fini(&mgr->network);
+                        mgr->network_initialized = false;
+                    }
+                    break;
+                case GAME_RESULT_RETURN_TITLE:
+                    return scene_change(mgr, SCENE_TITLE);
+                default:
+                    LOG_ERROR("不正なゲームシーン結果が返されました");
+                    return false;
+            }
+        }
 
         default:
             LOG_ERROR("不正なシーンが渡されています");
@@ -119,6 +136,7 @@ static void fini_scene(unique_ptr<SceneManager> &mgr)
 
         case SCENE_GAME:
             LOG_DEBUG("SCENE_GAMEを終了します。");
+            game_scene_fini(&mgr->game_scene);
             break;
 
         default:

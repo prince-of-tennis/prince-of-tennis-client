@@ -178,14 +178,20 @@ void loop(Looper *looper)
 void looper_fini(Looper *looper)
 {
     scene_manager_fini(looper->scene_manager);
-    window_manager_fini();
 
     // Joy-Con が初期化されている場合のみ終了処理
-    if (looper->scene_manager->joycon_initialized)
+    bool joycon_was_initialized = looper->scene_manager->joycon_initialized;
+
+    // SDL_Quit()の前にSceneManagerを破棄する
+    // （GameSceneのEZ_2D_Font, EZ_2D_ImageなどがOpenGLコンテキスト有効時に解放されるように）
+    looper->scene_manager.reset();
+
+    if (joycon_was_initialized)
     {
         joycon_fini(&looper->joycon);
     }
 
+    window_manager_fini();
     SDL_Quit();
     LOG_SUCCESS("SDLを終了しました");
 }
