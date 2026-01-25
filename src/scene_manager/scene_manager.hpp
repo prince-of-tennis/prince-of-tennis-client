@@ -6,6 +6,7 @@
 
 #include "common/player_input.h"
 #include "common/player_swing.h"
+#include "connection/connection_manager.hpp"
 #include "core/context.hpp"
 #include "joycon/joycon.hpp"
 #include "network/network.hpp"
@@ -28,6 +29,9 @@ struct SceneManager
 
     // SceneManager が所有する Network
     Network network;
+
+    // 接続マネージャー（別スレッドでジョイコン接続を管理）
+    ConnectionManager connection_manager;
 
     // 初期化フラグ
     bool joycon_initialized;

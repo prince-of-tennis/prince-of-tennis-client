@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "connection/connection_manager.hpp"
 #include "game_scene_camera.hpp"
 #include "game_scene_network.hpp"
 #include "glad/glad.h"
@@ -154,6 +155,10 @@ bool game_scene_init(GameScene *scene, Network *network)
     scene->current_phase = GAME_PHASE_START_GAME;
     scene->network->network_data_set.match_winner = -1;  // サーバーからの結果待ち
 
+    // ネットワークエラー関連の初期化
+    scene->network_error = false;
+    scene->network_error_counter = 0;
+
     LOG_SUCCESS("GameScene初期化完了");
     return true;
 }
@@ -173,9 +178,31 @@ void game_scene_fini(GameScene *scene)
     LOG_DEBUG("GameScene終了処理完了");
 }
 
+// ネットワークエラー表示フレーム数（3秒）
+constexpr int NETWORK_ERROR_DISPLAY_FRAMES = 180;
+
 GameSceneResult game_scene_update(GameScene *scene, PlayerInput *player_input,
                                   PlayerSwing *player_swing)
 {
+    // ネットワークエラー状態の場合
+    if (scene->network_error)
+    {
+        scene->network_error_counter--;
+        if (scene->network_error_counter <= 0)
+        {
+            LOG_DEBUG("ネットワークエラー: タイトル画面に戻ります");
+            return GAME_RESULT_NETWORK_ERROR;
+        }
+        // Enterキーで即座にタイトルに戻る
+        const Uint8 *key_state = SDL_GetKeyboardState(nullptr);
+        if (key_state[SDL_SCANCODE_RETURN])
+        {
+            LOG_DEBUG("ネットワークエラー: Enterキーでタイトルに戻ります");
+            return GAME_RESULT_NETWORK_ERROR;
+        }
+        return GAME_RESULT_CONTINUE;
+    }
+
     // ゲーム終了状態の場合、エンターキーでタイトルに戻る
     if (scene->is_game_finished)
     {
@@ -188,9 +215,37 @@ GameSceneResult game_scene_update(GameScene *scene, PlayerInput *player_input,
         return GAME_RESULT_CONTINUE;
     }
 
+    // ジョイコン切断検出と再接続
+    if (scene->connection_manager != nullptr && scene->joycon != nullptr)
+    {
+        if (connection_manager_check_joycon_disconnected(scene->connection_manager))
+        {
+            // ジョイコンが切断された - 再接続をリクエスト
+            LOG_WARN("ゲーム画面: ジョイコン切断検出、再接続を試みます");
+            scene->joycon = nullptr;  // ジョイコンを無効化
+            connection_manager_request_joycon_reconnect(scene->connection_manager);
+        }
+    }
+
+    // ジョイコン再接続完了チェック
+    if (scene->connection_manager != nullptr && scene->joycon == nullptr)
+    {
+        if (connection_manager_is_joycon_connected(scene->connection_manager))
+        {
+            // 再接続完了
+            scene->joycon = scene->connection_manager->joycon;
+            LOG_SUCCESS("ゲーム画面: ジョイコン再接続完了");
+        }
+    }
+
+    // ネットワーク通信
     if (!network_listen_to_server(scene->network.get()))
     {
-        return GAME_RESULT_RETURN_TITLE;
+        // ネットワークエラー発生
+        LOG_ERROR("ネットワークエラー: サーバーとの接続が切れました");
+        scene->network_error = true;
+        scene->network_error_counter = NETWORK_ERROR_DISPLAY_FRAMES;
+        return GAME_RESULT_CONTINUE;
     }
 
     // ネットワークからボールのデータを取得して反映
@@ -446,6 +501,36 @@ void game_scene_draw(GameScene *scene)
         float enter_y = result_y + result_size + 100.0f;
 
         EZ_2D_DrawText(scene->font, enter_x, enter_y, press_enter, enter_size, 1.0f, 1.0f, 1.0f,
+                       1.0f);
+    }
+
+    // ネットワークエラー時の描画
+    if (scene->network_error)
+    {
+        EZ_LightSetColor(scene->light, 0.0f, 0.0f, 0.0f);  // ライトを消す
+        EZ_BackgroundClear(0, 0, 0, 1);                    // 背景を黒にする
+
+        float screen_width = static_cast<float>(scene->context->window_width);
+        float screen_height = static_cast<float>(scene->context->window_height);
+
+        // エラーメッセージの表示
+        const char *error_text = "サーバーとの接続が切れました";
+        float error_size = 40.0f;
+        float error_width = EZ_2D_GetTextWidth(scene->font, error_text, error_size);
+        float error_x = (screen_width - error_width) / 2.0f;
+        float error_y = screen_height / 2.0f - error_size / 2.0f;
+
+        EZ_2D_DrawText(scene->font, error_x, error_y, error_text, error_size, 1.0f, 0.3f, 0.3f,
+                       1.0f);
+
+        // 「タイトルに戻ります」の表示
+        const char *return_text = "タイトルに戻ります...";
+        float return_size = 28.0f;
+        float return_width = EZ_2D_GetTextWidth(scene->font, return_text, return_size);
+        float return_x = (screen_width - return_width) / 2.0f;
+        float return_y = error_y + error_size + 50.0f;
+
+        EZ_2D_DrawText(scene->font, return_x, return_y, return_text, return_size, 0.8f, 0.8f, 0.8f,
                        1.0f);
     }
 

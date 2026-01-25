@@ -69,4 +69,7 @@ bool joycon_is_just_pressed(const Joycon *joycon, JoyconButton button);
 // ボタンが今離された瞬間か（エッジ検出）
 bool joycon_is_just_released(const Joycon *joycon, JoyconButton button);
 
+// ジョイコンが接続されているかチェック（状態取得でエラーが発生したらfalse）
+bool joycon_check_connected(Joycon *joycon);
+
 void joycon_fini(Joycon *joycon);

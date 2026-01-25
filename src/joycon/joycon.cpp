@@ -217,6 +217,18 @@ bool joycon_is_just_released(const Joycon *joycon, JoyconButton button)
     return !joycon->buttons[button] && joycon->prev_buttons[button];
 }
 
+bool joycon_check_connected(Joycon *joycon)
+{
+    // joycon_get_stateを呼び出して、エラーが発生したら切断とみなす
+    joycon_err err = joycon_get_state(&joycon->joycon);
+    if (err != JOYCON_ERR_NONE)
+    {
+        LOG_WARN("ジョイコン切断検出: エラーコード=" << err);
+        return false;
+    }
+    return true;
+}
+
 void joycon_fini(Joycon *joycon)
 {
     joycon_close(&joycon->joycon);

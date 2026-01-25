@@ -14,6 +14,47 @@ constexpr float STATUS_FONT_SIZE = 36.0f;
 // Joy-Con 接続フェーズの処理
 static void update_joycon_phase(MatchingScene *scene)
 {
+    // ConnectionManager経由で接続状態をチェック
+    if (scene->connection_manager != nullptr)
+    {
+        ConnectionState state = connection_manager_get_joycon_state(scene->connection_manager);
+
+        if (state == ConnectionState::CONNECTED)
+        {
+            // 別スレッドで接続完了
+            LOG_SUCCESS("マッチングシーン: Joy-Con 接続成功（別スレッド）");
+            if (scene->joycon_initialized_ptr)
+            {
+                *scene->joycon_initialized_ptr = true;
+            }
+            scene->phase = MATCHING_PHASE_SERVER;
+            scene->last_attempt_failed = false;
+            scene->retry_count = 0;
+            return;
+        }
+        else if (state == ConnectionState::CONNECTING)
+        {
+            // 接続中
+            scene->status_message = "Joy-Conに接続中";
+            return;
+        }
+        else if (state == ConnectionState::FAILED)
+        {
+            // 失敗 → 再接続リクエスト
+            scene->status_message = "Joy-Conに接続中";
+            connection_manager_request_joycon_reconnect(scene->connection_manager);
+            return;
+        }
+        else
+        {
+            // DISCONNECTED → 接続開始
+            connection_manager_start_joycon_connect(scene->connection_manager);
+            scene->status_message = "Joy-Conに接続中";
+            return;
+        }
+    }
+
+    // ConnectionManagerがない場合は従来の同期処理
     // 前回失敗してリトライ待機中
     if (scene->last_attempt_failed)
     {
@@ -169,13 +210,23 @@ bool matching_scene_init(MatchingScene *scene)
     scene->se_decide = audio_load_se(&scene->audio, "audio/se/select.mp3");
 
     // 変数初期化
-    scene->phase = MATCHING_PHASE_JOYCON;
     scene->retry_count = 0;
     scene->retry_wait_frames = 0;
     scene->last_attempt_failed = false;
     scene->status_message = "";
     scene->dot_animation_counter = 0;
     scene->complete_counter = 0;
+
+    // ジョイコンが既に接続済みならサーバー接続フェーズから開始
+    if (scene->joycon_initialized_ptr && *scene->joycon_initialized_ptr)
+    {
+        scene->phase = MATCHING_PHASE_SERVER;
+        LOG_DEBUG("マッチングシーン: ジョイコン接続済み、サーバー接続から開始");
+    }
+    else
+    {
+        scene->phase = MATCHING_PHASE_JOYCON;
+    }
 
     LOG_DEBUG("マッチングシーンを初期化しました");
     return true;

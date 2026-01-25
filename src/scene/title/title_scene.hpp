@@ -1,6 +1,7 @@
 #pragma once
 
 #include "audio/audio.hpp"
+#include "connection/connection_manager.hpp"
 #include "core/context.hpp"
 #include "joycon/joycon.hpp"
 #include "opengl/2d/EZ_2d.h"
@@ -71,6 +72,10 @@ struct TitleScene
     Audio audio;
     int se_cursor_move;
     int se_decide;
+
+    // 接続管理
+    ConnectionManager *connection_manager;
+    bool *joycon_initialized_ptr;
 };
 
 /// @brief タイトルシーンの初期化

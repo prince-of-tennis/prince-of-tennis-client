@@ -79,6 +79,29 @@ TitleSceneResult title_scene_update(TitleScene *scene)
     // フレームカウンター更新
     scene->frame_counter++;
 
+    // 別スレッドでのジョイコン接続状態をチェック
+    if (scene->connection_manager != nullptr && scene->joycon == nullptr)
+    {
+        ConnectionState state = connection_manager_get_joycon_state(scene->connection_manager);
+
+        if (state == ConnectionState::CONNECTED)
+        {
+            // ジョイコン接続完了
+            scene->joycon = scene->connection_manager->joycon;
+            if (scene->joycon_initialized_ptr != nullptr)
+            {
+                *scene->joycon_initialized_ptr = true;
+            }
+            LOG_SUCCESS("タイトル画面: ジョイコン接続完了");
+        }
+        else if (state == ConnectionState::DISCONNECTED || state == ConnectionState::FAILED)
+        {
+            // 未接続または失敗の場合は接続を試みる
+            connection_manager_request_joycon_reconnect(scene->connection_manager);
+        }
+        // CONNECTING状態の場合は何もしない（接続中）
+    }
+
     // フェードインアニメーション
     if (!scene->fade_in_complete)
     {
