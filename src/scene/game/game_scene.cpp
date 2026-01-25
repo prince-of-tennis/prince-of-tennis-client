@@ -412,17 +412,14 @@ void game_scene_draw(GameScene *scene)
         }
     }
 
-    // スコア表示
-    draw_score(scene);
-
     // ゲーム終了時の描画
     if (scene->is_game_finished)
     {
+        EZ_LightSetColor(scene->light, 0.0f, 0.0f, 0.0f);  // ライトを消す
+        EZ_BackgroundClear(0, 0, 0, 1);                    // 背景を黒にする
+
         float screen_width = static_cast<float>(scene->context->window_width);
         float screen_height = static_cast<float>(scene->context->window_height);
-
-        // 画面全体を暗くするオーバーレイ
-        EZ_2D_DrawRect(0.0f, 0.0f, screen_width, screen_height, 0.0f, 0.0f, 0.0f, 0.7f);
 
         // Win / Loose の表示
         int my_player_id = scene->context->player_id;
@@ -432,7 +429,7 @@ void game_scene_draw(GameScene *scene)
         float result_size = 120.0f;
         float result_width = EZ_2D_GetTextWidth(scene->font, result_text, result_size);
         float result_x = (screen_width - result_width) / 2.0f;
-        float result_y = screen_height / 2.0f - result_size / 2.0f;
+        float result_y = screen_height / 2.0f - result_size / 2.0f + 50.0f;
 
         // 勝者は黄色、敗者は灰色
         float r = is_winner ? 1.0f : 0.6f;
@@ -446,11 +443,14 @@ void game_scene_draw(GameScene *scene)
         float enter_size = 30.0f;
         float enter_width = EZ_2D_GetTextWidth(scene->font, press_enter, enter_size);
         float enter_x = (screen_width - enter_width) / 2.0f;
-        float enter_y = result_y + result_size + 50.0f;
+        float enter_y = result_y + result_size + 100.0f;
 
         EZ_2D_DrawText(scene->font, enter_x, enter_y, press_enter, enter_size, 1.0f, 1.0f, 1.0f,
                        1.0f);
     }
+
+    // スコア表示
+    draw_score(scene);
 }
 
 // スコア表示関数
