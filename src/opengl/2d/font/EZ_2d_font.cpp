@@ -320,3 +320,39 @@ void EZ_2D_DrawText(EZ_2D_Font font, float x, float y, const char *text, float s
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
+
+float EZ_2D_GetTextWidth(EZ_2D_Font font, const char *text, float size)
+{
+    if (!font || !text)
+    {
+        return 0.0f;
+    }
+
+    float scale = size / (float)font->font_size;
+    float width = 0.0f;
+    const char *p = text;
+
+    while (*p)
+    {
+        uint32_t codepoint = _EZ_2D_GetNextUTF8Char(&p);
+
+        if (codepoint == 0)
+        {
+            break;
+        }
+
+        // グリフがキャッシュされていなければロード
+        if (font->characters.find(codepoint) == font->characters.end())
+        {
+            if (!_EZ_2D_LoadGlyph(font.get(), codepoint))
+            {
+                continue;
+            }
+        }
+
+        Character ch = font->characters[codepoint];
+        width += (ch.advance >> 6) * scale;
+    }
+
+    return width;
+}

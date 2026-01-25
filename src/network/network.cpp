@@ -137,9 +137,15 @@ bool network_handle_packet(Network *network, Packet packet)
             GameScore game_score;
             if (!packet_deserialize(packet, game_score))
             {
-                LOG_ERROR("スコアデータのデシリアライズに失敗");
+                LOG_ERROR("スコアデータのデシリアライズに失敗: packet.size="
+                          << packet.size << " expected=" << sizeof(GameScore));
                 return false;
             }
+            LOG_DEBUG("スコア受信: P1=" << game_score.current_game_p1
+                                        << " P2=" << game_score.current_game_p2
+                                        << " set=" << game_score.current_set << " games[0]="
+                                        << game_score.games_in_set[game_score.current_set][0] << "-"
+                                        << game_score.games_in_set[game_score.current_set][1]);
             network->network_data_set.game_score = game_score;
             break;
         }
@@ -161,8 +167,8 @@ bool network_handle_packet(Network *network, Packet packet)
                 return false;
             }
             network->network_data_set.ability_states[ability_state.player_id] = ability_state;
-            LOG_DEBUG("能力状態受信: player=" << ability_state.player_id
-                                              << " ability=" << static_cast<int>(ability_state.active_ability)
+            LOG_DEBUG("能力状態受信: player=" << ability_state.player_id << " ability="
+                                              << static_cast<int>(ability_state.active_ability)
                                               << " remaining=" << ability_state.remaining_frames);
             break;
         }

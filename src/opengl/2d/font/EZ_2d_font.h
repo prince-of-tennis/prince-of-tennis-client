@@ -66,3 +66,10 @@ bool _EZ_2D_LoadGlyph(_EZ_2D_Font *font, uint32_t codepoint);
 /// @param a アルファ成分 (0.0~1.0)
 void EZ_2D_DrawText(EZ_2D_Font font, float x, float y, const char *text, float size, float r,
                     float g, float b, float a);
+
+/// @brief テキストの幅を計算
+/// @param font 使用するフォント
+/// @param text 計測するテキスト
+/// @param size フォントサイズ
+/// @return テキストの幅（ピクセル）
+float EZ_2D_GetTextWidth(EZ_2D_Font font, const char *text, float size);

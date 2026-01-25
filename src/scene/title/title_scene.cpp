@@ -225,16 +225,13 @@ void title_scene_draw(TitleScene *scene)
     // コート描画（回転適用済み）
     EZ_DrawObject(scene->court_object, scene->shader, scene->camera, scene->light);
 
-    // 2D描画（深度テスト無効）
-    // glDisable(GL_DEPTH_TEST);
-
     float screen_width = static_cast<float>(scene->context->window_width);
     float screen_height = static_cast<float>(scene->context->window_height);
 
     const char *title_text = "超次元テニス";
     float title_x = screen_width / 2.0f - 220.0f;
     float title_y = screen_height * 0.15f;
-    EZ_2D_DrawText(scene->font, title_x, title_y, title_text, TITLE_FONT_SIZE, 1.0f, 1.0f, 1.0f,
+    EZ_2D_DrawText(scene->font, title_x, title_y, title_text, TITLE_FONT_SIZE, 0.0f, 0.0f, 0.0f,
                    scene->title_alpha);
 
     // メニュー項目（フェードイン完了後のみ表示）

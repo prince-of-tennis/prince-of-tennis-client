@@ -108,7 +108,39 @@ static AbilityActivateRequest* ability_try_activate(AbilityManager* mgr, int pla
 
 AbilityActivateRequest* ability_check_instant(AbilityManager* mgr, int player_id)
 {
-    return ability_try_activate(mgr, player_id, TRIGGER_INSTANT);
+    for (size_t i = 0; i < ABILITY_CONFIG_COUNT; ++i)
+    {
+        const AbilityConfig& config = ABILITY_CONFIGS[i];
+
+        if (config.trigger != TRIGGER_INSTANT)
+        {
+            continue;
+        }
+
+        if (config.type == ABILITY_GIANT || config.type == ABILITY_CLONE)
+        {
+            continue;
+        }
+
+        if (!mgr->button_held[config.type])
+        {
+            continue;
+        }
+
+        if (!config.requires_server)
+        {
+            ability_activate_local(mgr, config.type);
+        }
+
+        mgr->pending_request.player_id = player_id;
+        mgr->pending_request.ability_type = config.type;
+        mgr->pending_request.trigger = TRIGGER_INSTANT;
+        mgr->has_pending_request = true;
+
+        return &mgr->pending_request;
+    }
+
+    return nullptr;
 }
 
 AbilityActivateRequest* ability_check_on_swing(AbilityManager* mgr, int player_id)

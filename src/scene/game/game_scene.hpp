@@ -50,6 +50,10 @@ constexpr float PLAYER_INITIAL_Z = 0.0f;
 constexpr float SCORE_OFFSET_X = 100.0f;  // 中央からのオフセット
 constexpr float SCORE_POS_Y = 50.0f;
 constexpr float SCORE_FONT_SIZE = 60.0f;
+// セット数表示設定
+constexpr float SET_SCORE_OFFSET_Y = 55.0f;  // ポイントスコアからのY方向オフセット（上寄り）
+constexpr float SET_SCORE_FONT_SIZE = 30.0f;
+constexpr float SET_SCORE_OFFSET_X = 50.0f;  // 中央からのオフセット（少し中央寄り）
 
 struct GameScene
 {

@@ -229,10 +229,7 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
     // プレイヤー入力をサーバーに送信
     game_scene_send_player_input(scene, player_input);
 
-    // スイングデータをサーバーに送信
-    game_scene_send_player_swing(scene, player_swing);
-
-    // 能力ボタン状態更新
+    // 能力ボタン状態更新（スイング送信前に更新）
     ability_manager_update(&scene->ability_manager, scene->joycon);
 
     // 即時発動能力のチェック
@@ -242,20 +239,33 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
         game_scene_send_ability_request(scene, instant_req);
     }
 
-    // #86: でかすぎんだろ - Xボタン状態変化をサーバーに送信
     static bool prev_giant_button = false;
+    static bool prev_clone_button = false;
     bool curr_giant_button = scene->ability_manager.button_held[ABILITY_GIANT];
+    bool curr_clone_button = scene->ability_manager.button_held[ABILITY_CLONE];
+
     if (curr_giant_button != prev_giant_button)
     {
-        AbilityActivateRequest giant_req;
-        giant_req.player_id = my_id;
-        giant_req.ability_type = ABILITY_GIANT;
-        giant_req.trigger = curr_giant_button ? TRIGGER_INSTANT : TRIGGER_ON_HIT; // ON_HIT=解除の意味で流用
-        game_scene_send_ability_request(scene, &giant_req);
+        AbilityActivateRequest req;
+        req.player_id = my_id;
+        req.ability_type = ABILITY_GIANT;
+        req.trigger = curr_giant_button ? TRIGGER_INSTANT : TRIGGER_ON_HIT;
+        game_scene_send_ability_request(scene, &req);
         prev_giant_button = curr_giant_button;
     }
 
-    // スイング時発動能力のチェック（スイングが送信される場合）
+    if (curr_clone_button != prev_clone_button)
+    {
+        LOG_DEBUG("Clone button changed: " << curr_clone_button << " -> sending " << (curr_clone_button ? "ACTIVATE" : "DEACTIVATE"));
+        AbilityActivateRequest req;
+        req.player_id = my_id;
+        req.ability_type = ABILITY_CLONE;
+        req.trigger = curr_clone_button ? TRIGGER_INSTANT : TRIGGER_ON_HIT;
+        game_scene_send_ability_request(scene, &req);
+        prev_clone_button = curr_clone_button;
+    }
+
+    // スイング時発動能力のチェック（スイングデータ送信前に能力リクエストを送信）
     if (player_swing != nullptr)
     {
         AbilityActivateRequest* swing_req = ability_check_on_swing(&scene->ability_manager, my_id);
@@ -264,6 +274,9 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
             game_scene_send_ability_request(scene, swing_req);
         }
     }
+
+    // スイングデータをサーバーに送信（能力リクエストの後に送信）
+    game_scene_send_player_swing(scene, player_swing);
 
     // 打撃時発動能力のチェック（ボールを打った場合）
     if (ball_hit_detected)
@@ -321,11 +334,46 @@ void game_scene_draw(GameScene *scene)
     }
 
     // プレイヤーの描画
+    constexpr float CLONE_OFFSET_X = 3.0f;
     for (int i = 0; i < PLAYER_MAX; i++)
     {
-        if (scene->player_objects[i])
+        if (!scene->player_objects[i])
         {
+            continue;
+        }
+
+        EZ_DrawObject(scene->player_objects[i], scene->shader, scene->camera, scene->light);
+
+        const AbilityState& ability_state = scene->network->network_data_set.ability_states[i];
+
+        static int debug_counter = 0;
+        if (debug_counter++ % 60 == 0)
+        {
+            LOG_DEBUG("Player " << i << " ability: " << static_cast<int>(ability_state.active_ability)
+                      << " remaining: " << ability_state.remaining_frames);
+        }
+
+        if (ability_state.active_ability == ABILITY_CLONE && ability_state.remaining_frames > 0)
+        {
+            LOG_DEBUG("分身描画: player=" << i);
+            float original_x = scene->player_data[i].point.x;
+
+            EZ_ObjectSetPosition(scene->player_objects[i],
+                                 original_x - CLONE_OFFSET_X,
+                                 scene->player_data[i].point.y,
+                                 scene->player_data[i].point.z);
             EZ_DrawObject(scene->player_objects[i], scene->shader, scene->camera, scene->light);
+
+            EZ_ObjectSetPosition(scene->player_objects[i],
+                                 original_x + CLONE_OFFSET_X,
+                                 scene->player_data[i].point.y,
+                                 scene->player_data[i].point.z);
+            EZ_DrawObject(scene->player_objects[i], scene->shader, scene->camera, scene->light);
+
+            EZ_ObjectSetPosition(scene->player_objects[i],
+                                 original_x,
+                                 scene->player_data[i].point.y,
+                                 scene->player_data[i].point.z);
         }
     }
 
@@ -334,6 +382,20 @@ void game_scene_draw(GameScene *scene)
 }
 
 // スコア表示関数
+// ポイントを表示用文字列に変換（50はAdvに変換）
+static void points_to_string(int points, int opponent_points, char* buffer, size_t buffer_size)
+{
+    // デュース状態（両者40以上）で50ならAdv
+    if (points == 50 && opponent_points >= 40)
+    {
+        snprintf(buffer, buffer_size, "Adv");
+    }
+    else
+    {
+        snprintf(buffer, buffer_size, "%d", points);
+    }
+}
+
 void draw_score(GameScene *scene)
 {
     int my_player_id = scene->context->player_id;
@@ -361,19 +423,42 @@ void draw_score(GameScene *scene)
         return;
     }
 
-    // スコア文字列を作成（例: "15 : 30"）
+    // ポイントスコア文字列を作成（50はAdvに変換）
+    char my_score_str[8];
+    char opp_score_str[8];
+    points_to_string(my_points, opponent_points, my_score_str, sizeof(my_score_str));
+    points_to_string(opponent_points, my_points, opp_score_str, sizeof(opp_score_str));
     char score_text[64];
-    snprintf(score_text, sizeof(score_text), "%d : %d", my_points, opponent_points);
+    snprintf(score_text, sizeof(score_text), "%s : %s", my_score_str, opp_score_str);
 
-    // 画面中央上部に表示
+    // 画面中央上部に表示（テキスト幅を考慮して中央揃え）
     float screen_width = static_cast<float>(scene->context->window_width);
-    float x = screen_width / 2.0f - SCORE_OFFSET_X;  // 中央寄せ
     float y = SCORE_POS_Y;
     float size = SCORE_FONT_SIZE;
 
     // 色設定（白）
     float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
 
-    // スコアを描画
+    // テキスト幅を計算して中央揃え
+    float text_width = EZ_2D_GetTextWidth(scene->font, score_text, size);
+    float x = (screen_width - text_width) / 2.0f;
+
+    // ポイントスコアを描画
     EZ_2D_DrawText(scene->font, x, y, score_text, size, r, g, b, a);
+
+    // セット数（ゲーム数）を表示
+    int current_set = game_score.current_set;
+    int my_games = game_score.games_in_set[current_set][my_player_id];
+    int opp_games = game_score.games_in_set[current_set][opponent_id];
+
+    char set_text[64];
+    snprintf(set_text, sizeof(set_text), "%d - %d", my_games, opp_games);
+
+    // セット数もテキスト幅を計算して中央揃え
+    float set_text_width = EZ_2D_GetTextWidth(scene->font, set_text, SET_SCORE_FONT_SIZE);
+    float set_x = (screen_width - set_text_width) / 2.0f;
+    float set_y = SCORE_POS_Y + SET_SCORE_OFFSET_Y;
+
+    // セット数を小さめのフォントで描画
+    EZ_2D_DrawText(scene->font, set_x, set_y, set_text, SET_SCORE_FONT_SIZE, r, g, b, a);
 }
