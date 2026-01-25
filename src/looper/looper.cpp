@@ -9,6 +9,10 @@
 #include "util/log.hpp"
 #include "window_manager/window_manager.hpp"
 
+// コマンドライン引数から取得する関数（main.cppで定義）
+extern const char *get_network_hostname();
+extern int get_network_port();
+
 static Context g_context;
 static EasyGL g_opengl;
 
@@ -34,8 +38,9 @@ void context_init()
     g_context.background_g = 76;
     g_context.background_b = 76;
 
-    g_context.network_host = "localhost";
-    g_context.network_port = 5000;
+    // コマンドライン引数から取得
+    g_context.network_host = get_network_hostname();
+    g_context.network_port = static_cast<Uint16>(get_network_port());
 }
 
 /// @brief フレーム開始時の処理
