@@ -230,7 +230,7 @@ void title_scene_draw(TitleScene *scene)
 
     const char *title_text = "超次元テニス";
     float title_x = screen_width / 2.0f - 220.0f;
-    float title_y = screen_height * 0.15f;
+    float title_y = screen_height * 0.25f;
     EZ_2D_DrawText(scene->font, title_x, title_y, title_text, TITLE_FONT_SIZE, 0.0f, 0.0f, 0.0f,
                    scene->title_alpha);
 
