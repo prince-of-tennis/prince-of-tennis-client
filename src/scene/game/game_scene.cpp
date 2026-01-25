@@ -3,19 +3,25 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "game_scene_camera.hpp"
+#include "game_scene_network.hpp"
 #include "glad/glad.h"
 #include "joycon/joycon.hpp"
 #include "network/network.hpp"
 #include "opengl/2d/EZ_2d.h"
 #include "opengl/EasyGL.hpp"
-#include "game_scene_camera.hpp"
-#include "game_scene_network.hpp"
 #include "util/log.hpp"
 
-// スコア取得ヘルパー関数
-static int get_player_score(const GameScore &score, int player_id)
+// ポイント取得ヘルパー関数
+static int get_player_point(const GameScore &score, int player_id)
 {
-    return (player_id == 0) ? score.current_game_p1 : score.current_game_p2;
+    return (player_id == 0) ? score.point_p1 : score.point_p2;
+}
+
+// セット数取得ヘルパー関数
+static int get_player_sets(const GameScore &score, int player_id)
+{
+    return (player_id == 0) ? score.sets_p1 : score.sets_p2;
 }
 
 bool game_scene_init(GameScene *scene, Network *network)
@@ -142,6 +148,12 @@ bool game_scene_init(GameScene *scene, Network *network)
     // 能力マネージャー初期化
     ability_manager_init(&scene->ability_manager);
 
+    // ゲーム終了関連の初期化
+    scene->is_game_finished = false;
+    scene->winner_id = -1;
+    scene->current_phase = GAME_PHASE_START_GAME;
+    scene->network->network_data_set.match_winner = -1;  // サーバーからの結果待ち
+
     LOG_SUCCESS("GameScene初期化完了");
     return true;
 }
@@ -156,15 +168,29 @@ void game_scene_fini(GameScene *scene)
     // networkはSceneManagerが所有しているため、unique_ptrから所有権を放棄する
     // （deleteしない）
     scene->network.release();
+    scene->context->player_id = -1;
 
     LOG_DEBUG("GameScene終了処理完了");
 }
 
-bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing *player_swing)
+GameSceneResult game_scene_update(GameScene *scene, PlayerInput *player_input,
+                                  PlayerSwing *player_swing)
 {
+    // ゲーム終了状態の場合、エンターキーでタイトルに戻る
+    if (scene->is_game_finished)
+    {
+        const Uint8 *key_state = SDL_GetKeyboardState(nullptr);
+        if (key_state[SDL_SCANCODE_RETURN])
+        {
+            LOG_DEBUG("タイトル画面に戻ります");
+            return GAME_RESULT_RETURN_TITLE;
+        }
+        return GAME_RESULT_CONTINUE;
+    }
+
     if (!network_listen_to_server(scene->network.get()))
     {
-        return false;
+        return GAME_RESULT_RETURN_TITLE;
     }
 
     // ネットワークからボールのデータを取得して反映
@@ -186,10 +212,9 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
 
     // 自分が得点したときにSE再生
     int my_id = scene->context->player_id;
-    int my_prev_score = (my_id == 0) ? scene->prev_game_score.current_game_p1
-                                     : scene->prev_game_score.current_game_p2;
-    int my_curr_score = (my_id == 0) ? scene->game_score.current_game_p1
-                                     : scene->game_score.current_game_p2;
+    int my_prev_score =
+        (my_id == 0) ? scene->prev_game_score.point_p1 : scene->prev_game_score.point_p2;
+    int my_curr_score = (my_id == 0) ? scene->game_score.point_p1 : scene->game_score.point_p2;
     if (my_curr_score > my_prev_score)
     {
         audio_play_se(&scene->audio, scene->se_yatta);
@@ -211,8 +236,9 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
                              scene->player_data[i].point.y, scene->player_data[i].point.z);
 
         // #86: でかすぎんだろ - サーバーから受信した能力状態でスケール変更
-        const AbilityState& ability_state = scene->network->network_data_set.ability_states[i];
-        bool is_giant = (ability_state.active_ability == ABILITY_GIANT && ability_state.remaining_frames > 0);
+        const AbilityState &ability_state = scene->network->network_data_set.ability_states[i];
+        bool is_giant =
+            (ability_state.active_ability == ABILITY_GIANT && ability_state.remaining_frames > 0);
         if (is_giant)
         {
             EZ_ObjectSetScale(scene->player_objects[i], 10.0f, 10.0f, 10.0f);
@@ -233,7 +259,7 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
     ability_manager_update(&scene->ability_manager, scene->joycon);
 
     // 即時発動能力のチェック
-    AbilityActivateRequest* instant_req = ability_check_instant(&scene->ability_manager, my_id);
+    AbilityActivateRequest *instant_req = ability_check_instant(&scene->ability_manager, my_id);
     if (instant_req)
     {
         game_scene_send_ability_request(scene, instant_req);
@@ -256,7 +282,8 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
 
     if (curr_clone_button != prev_clone_button)
     {
-        LOG_DEBUG("Clone button changed: " << curr_clone_button << " -> sending " << (curr_clone_button ? "ACTIVATE" : "DEACTIVATE"));
+        LOG_DEBUG("Clone button changed: " << curr_clone_button << " -> sending "
+                                           << (curr_clone_button ? "ACTIVATE" : "DEACTIVATE"));
         AbilityActivateRequest req;
         req.player_id = my_id;
         req.ability_type = ABILITY_CLONE;
@@ -268,7 +295,7 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
     // スイング時発動能力のチェック（スイングデータ送信前に能力リクエストを送信）
     if (player_swing != nullptr)
     {
-        AbilityActivateRequest* swing_req = ability_check_on_swing(&scene->ability_manager, my_id);
+        AbilityActivateRequest *swing_req = ability_check_on_swing(&scene->ability_manager, my_id);
         if (swing_req)
         {
             game_scene_send_ability_request(scene, swing_req);
@@ -281,7 +308,7 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
     // 打撃時発動能力のチェック（ボールを打った場合）
     if (ball_hit_detected)
     {
-        AbilityActivateRequest* hit_req = ability_check_on_hit(&scene->ability_manager, my_id);
+        AbilityActivateRequest *hit_req = ability_check_on_hit(&scene->ability_manager, my_id);
         if (hit_req)
         {
             game_scene_send_ability_request(scene, hit_req);
@@ -294,7 +321,19 @@ bool game_scene_update(GameScene *scene, PlayerInput *player_input, PlayerSwing 
     // 打撃カウントを更新（次フレーム用）
     scene->prev_hit_count = scene->ball_data.hit_count;
 
-    return true;
+    // ゲームフェーズを更新
+    scene->current_phase = scene->network->network_data_set.game_phase;
+
+    // サーバーから試合結果を受信したら終了状態にする
+    int server_winner = scene->network->network_data_set.match_winner;
+    if (server_winner >= 0 && !scene->is_game_finished)
+    {
+        scene->is_game_finished = true;
+        scene->winner_id = server_winner;
+        LOG_SUCCESS("試合終了！勝者: Player " << (scene->winner_id + 1));
+    }
+
+    return GAME_RESULT_CONTINUE;
 }
 
 void game_scene_draw(GameScene *scene)
@@ -320,7 +359,8 @@ void game_scene_draw(GameScene *scene)
     if (ball_invisible)
     {
         // 発動中のフレーム数をログ出力（デバッグ用）
-        uint32_t remaining = scene->ability_manager.local_states[ABILITY_INVISIBLE_BALL].remaining_frames;
+        uint32_t remaining =
+            scene->ability_manager.local_states[ABILITY_INVISIBLE_BALL].remaining_frames;
         static uint32_t last_remaining = 0;
         if (remaining != last_remaining)
         {
@@ -344,13 +384,14 @@ void game_scene_draw(GameScene *scene)
 
         EZ_DrawObject(scene->player_objects[i], scene->shader, scene->camera, scene->light);
 
-        const AbilityState& ability_state = scene->network->network_data_set.ability_states[i];
+        const AbilityState &ability_state = scene->network->network_data_set.ability_states[i];
 
         static int debug_counter = 0;
         if (debug_counter++ % 60 == 0)
         {
-            LOG_DEBUG("Player " << i << " ability: " << static_cast<int>(ability_state.active_ability)
-                      << " remaining: " << ability_state.remaining_frames);
+            LOG_DEBUG("Player " << i
+                                << " ability: " << static_cast<int>(ability_state.active_ability)
+                                << " remaining: " << ability_state.remaining_frames);
         }
 
         if (ability_state.active_ability == ABILITY_CLONE && ability_state.remaining_frames > 0)
@@ -358,43 +399,61 @@ void game_scene_draw(GameScene *scene)
             LOG_DEBUG("分身描画: player=" << i);
             float original_x = scene->player_data[i].point.x;
 
-            EZ_ObjectSetPosition(scene->player_objects[i],
-                                 original_x - CLONE_OFFSET_X,
-                                 scene->player_data[i].point.y,
-                                 scene->player_data[i].point.z);
+            EZ_ObjectSetPosition(scene->player_objects[i], original_x - CLONE_OFFSET_X,
+                                 scene->player_data[i].point.y, scene->player_data[i].point.z);
             EZ_DrawObject(scene->player_objects[i], scene->shader, scene->camera, scene->light);
 
-            EZ_ObjectSetPosition(scene->player_objects[i],
-                                 original_x + CLONE_OFFSET_X,
-                                 scene->player_data[i].point.y,
-                                 scene->player_data[i].point.z);
+            EZ_ObjectSetPosition(scene->player_objects[i], original_x + CLONE_OFFSET_X,
+                                 scene->player_data[i].point.y, scene->player_data[i].point.z);
             EZ_DrawObject(scene->player_objects[i], scene->shader, scene->camera, scene->light);
 
-            EZ_ObjectSetPosition(scene->player_objects[i],
-                                 original_x,
-                                 scene->player_data[i].point.y,
-                                 scene->player_data[i].point.z);
+            EZ_ObjectSetPosition(scene->player_objects[i], original_x,
+                                 scene->player_data[i].point.y, scene->player_data[i].point.z);
         }
     }
 
     // スコア表示
     draw_score(scene);
+
+    // ゲーム終了時の描画
+    if (scene->is_game_finished)
+    {
+        float screen_width = static_cast<float>(scene->context->window_width);
+        float screen_height = static_cast<float>(scene->context->window_height);
+
+        // 画面全体を暗くするオーバーレイ
+        EZ_2D_DrawRect(0.0f, 0.0f, screen_width, screen_height, 0.0f, 0.0f, 0.0f, 0.7f);
+
+        // Win / Loose の表示
+        int my_player_id = scene->context->player_id;
+        bool is_winner = (scene->winner_id == my_player_id);
+
+        const char *result_text = is_winner ? "Win!!" : "Loose...";
+        float result_size = 120.0f;
+        float result_width = EZ_2D_GetTextWidth(scene->font, result_text, result_size);
+        float result_x = (screen_width - result_width) / 2.0f;
+        float result_y = screen_height / 2.0f - result_size / 2.0f;
+
+        // 勝者は黄色、敗者は灰色
+        float r = is_winner ? 1.0f : 0.6f;
+        float g = is_winner ? 0.9f : 0.6f;
+        float b = is_winner ? 0.0f : 0.6f;
+
+        EZ_2D_DrawText(scene->font, result_x, result_y, result_text, result_size, r, g, b, 1.0f);
+
+        // 「Press Enter」の表示
+        const char *press_enter = "Press Enter";
+        float enter_size = 30.0f;
+        float enter_width = EZ_2D_GetTextWidth(scene->font, press_enter, enter_size);
+        float enter_x = (screen_width - enter_width) / 2.0f;
+        float enter_y = result_y + result_size + 50.0f;
+
+        EZ_2D_DrawText(scene->font, enter_x, enter_y, press_enter, enter_size, 1.0f, 1.0f, 1.0f,
+                       1.0f);
+    }
 }
 
 // スコア表示関数
-// ポイントを表示用文字列に変換（50はAdvに変換）
-static void points_to_string(int points, int opponent_points, char* buffer, size_t buffer_size)
-{
-    // デュース状態（両者40以上）で50ならAdv
-    if (points == 50 && opponent_points >= 40)
-    {
-        snprintf(buffer, buffer_size, "Adv");
-    }
-    else
-    {
-        snprintf(buffer, buffer_size, "%d", points);
-    }
-}
 
 void draw_score(GameScene *scene)
 {
@@ -403,17 +462,19 @@ void draw_score(GameScene *scene)
 
     const GameScore &game_score = scene->network->network_data_set.game_score;
 
-    // ヘルパー関数を使用してスコアを取得
-    int my_points = get_player_score(game_score, my_player_id);
-    int opponent_points = get_player_score(game_score, opponent_id);
+    // ヘルパー関数を使用してポイントとセット数を取得
+    int my_points = get_player_point(game_score, my_player_id);
+    int opponent_points = get_player_point(game_score, opponent_id);
+    int my_sets = get_player_sets(game_score, my_player_id);
+    int opp_sets = get_player_sets(game_score, opponent_id);
 
     // デバッグ: スコアデータを確認（60フレームごとに1回出力）
     static int debug_counter = 0;
     if (debug_counter % 60 == 0)
     {
-        LOG_DEBUG("スコア表示 - 自分:" << my_points << " 相手:" << opponent_points
-                                       << " player_id:" << my_player_id
-                                       << " font:" << (scene->font != nullptr ? "OK" : "NULL"));
+        LOG_DEBUG("スコア表示 - ポイント:" << my_points << ":" << opponent_points
+                                           << " セット:" << my_sets << ":" << opp_sets
+                                           << " player_id:" << my_player_id);
     }
     debug_counter++;
 
@@ -423,36 +484,27 @@ void draw_score(GameScene *scene)
         return;
     }
 
-    // ポイントスコア文字列を作成（50はAdvに変換）
-    char my_score_str[8];
-    char opp_score_str[8];
-    points_to_string(my_points, opponent_points, my_score_str, sizeof(my_score_str));
-    points_to_string(opponent_points, my_points, opp_score_str, sizeof(opp_score_str));
-    char score_text[64];
-    snprintf(score_text, sizeof(score_text), "%s : %s", my_score_str, opp_score_str);
-
-    // 画面中央上部に表示（テキスト幅を考慮して中央揃え）
+    // 画面中央上部に表示
     float screen_width = static_cast<float>(scene->context->window_width);
     float y = SCORE_POS_Y;
-    float size = SCORE_FONT_SIZE;
 
     // 色設定（白）
     float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
 
+    // ポイントスコア文字列を作成（0, 15, 30, 40）
+    char score_text[64];
+    snprintf(score_text, sizeof(score_text), "%d : %d", my_points, opponent_points);
+
     // テキスト幅を計算して中央揃え
-    float text_width = EZ_2D_GetTextWidth(scene->font, score_text, size);
+    float text_width = EZ_2D_GetTextWidth(scene->font, score_text, SCORE_FONT_SIZE);
     float x = (screen_width - text_width) / 2.0f;
 
     // ポイントスコアを描画
-    EZ_2D_DrawText(scene->font, x, y, score_text, size, r, g, b, a);
+    EZ_2D_DrawText(scene->font, x, y, score_text, SCORE_FONT_SIZE, r, g, b, a);
 
-    // セット数（ゲーム数）を表示
-    int current_set = game_score.current_set;
-    int my_games = game_score.games_in_set[current_set][my_player_id];
-    int opp_games = game_score.games_in_set[current_set][opponent_id];
-
+    // セット数を表示
     char set_text[64];
-    snprintf(set_text, sizeof(set_text), "%d - %d", my_games, opp_games);
+    snprintf(set_text, sizeof(set_text), "%d - %d", my_sets, opp_sets);
 
     // セット数もテキスト幅を計算して中央揃え
     float set_text_width = EZ_2D_GetTextWidth(scene->font, set_text, SET_SCORE_FONT_SIZE);
