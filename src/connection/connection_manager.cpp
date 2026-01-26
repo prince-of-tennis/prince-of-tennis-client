@@ -6,13 +6,18 @@
 static int joycon_connect_thread_func(void *data)
 {
     ConnectionManager *mgr = static_cast<ConnectionManager *>(data);
+    constexpr int RETRY_DELAY_MS = 1000;  // リトライ間隔
 
     while (mgr->joycon_thread_running.load())
     {
         ConnectionState current_state = mgr->joycon_state.load();
 
-        // 接続中または再接続リクエストがある場合
-        if (current_state == ConnectionState::CONNECTING || mgr->reconnect_requested.load())
+        // 接続中、再接続リクエスト、または失敗状態の場合に接続を試行
+        bool should_connect = (current_state == ConnectionState::CONNECTING) ||
+                              (current_state == ConnectionState::FAILED) ||
+                              mgr->reconnect_requested.load();
+
+        if (should_connect)
         {
             mgr->reconnect_requested.store(false);
             mgr->joycon_state.store(ConnectionState::CONNECTING);
@@ -27,7 +32,9 @@ static int joycon_connect_thread_func(void *data)
             else
             {
                 mgr->joycon_state.store(ConnectionState::FAILED);
-                LOG_ERROR("ジョイコン接続失敗");
+                LOG_WARN("ジョイコン接続失敗、再試行します...");
+                SDL_Delay(RETRY_DELAY_MS);
+                continue;
             }
         }
 
