@@ -33,6 +33,7 @@ static int joycon_connect_thread_func(void *data)
             {
                 mgr->joycon_state.store(ConnectionState::FAILED);
                 LOG_WARN("ジョイコン接続失敗、再試行します...");
+                joycon_fini(mgr->joycon);
                 SDL_Delay(RETRY_DELAY_MS);
                 continue;
             }
