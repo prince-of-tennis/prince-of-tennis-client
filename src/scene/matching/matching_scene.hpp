@@ -1,6 +1,7 @@
 #pragma once
 
 #include "audio/audio.hpp"
+#include "connection/connection_manager.hpp"
 #include "core/context.hpp"
 #include "joycon/joycon.hpp"
 #include "network/network.hpp"
@@ -63,6 +64,9 @@ struct MatchingScene
     // 初期化フラグ（SceneManager から参照）
     bool *joycon_initialized_ptr;
     bool *network_initialized_ptr;
+
+    // 接続マネージャー
+    ConnectionManager *connection_manager;
 };
 
 /// @brief マッチングシーンの初期化

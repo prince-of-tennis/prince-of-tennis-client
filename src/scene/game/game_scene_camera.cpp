@@ -2,7 +2,6 @@
 
 #include "game_scene.hpp"
 #include "opengl/EasyGL.hpp"
-#include "util/log.hpp"
 
 void game_scene_update_camera(GameScene *scene)
 {
@@ -40,9 +39,6 @@ void game_scene_init_camera_position(GameScene *scene)
     // player_id == 0: コート奥側から見る（Z正方向）
     // player_id == 1: コート手前側から見る（Z負方向）
     float camera_z = (scene->context->player_id == 0) ? CAMERA_POS_Z : -CAMERA_POS_Z;
-
-    LOG_DEBUG("カメラ設定: player_id=" << scene->context->player_id << " camera_z=" << camera_z);
-
     EZ_CameraSetPosition(scene->camera, CAMERA_POS_X, CAMERA_POS_Y, camera_z);
     EZ_CameraSetTargetPosition(scene->camera, CAMERA_TARGET_X, CAMERA_TARGET_Y, CAMERA_TARGET_Z);
 }

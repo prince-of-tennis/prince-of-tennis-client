@@ -20,7 +20,16 @@ static bool init_scene(unique_ptr<SceneManager> &mgr)
         case SCENE_TITLE:
             LOG_DEBUG("SCENE_TITLEを初期化します。");
             mgr->title_scene.context = mgr->context;
+            // ジョイコン接続済みならジョイコンを渡す
             mgr->title_scene.joycon = mgr->joycon_initialized ? mgr->joycon : nullptr;
+            // ConnectionManagerへのポインタを渡す
+            mgr->title_scene.connection_manager = &mgr->connection_manager;
+            mgr->title_scene.joycon_initialized_ptr = &mgr->joycon_initialized;
+            // タイトル画面で別スレッドでジョイコン接続を開始
+            if (!mgr->joycon_initialized)
+            {
+                connection_manager_start_joycon_connect(&mgr->connection_manager);
+            }
             return title_scene_init(&mgr->title_scene);
 
         case SCENE_MATCHING:
@@ -28,6 +37,7 @@ static bool init_scene(unique_ptr<SceneManager> &mgr)
             mgr->matching_scene.context = mgr->context;
             mgr->matching_scene.joycon = mgr->joycon;
             mgr->matching_scene.network = &mgr->network;
+            mgr->matching_scene.connection_manager = &mgr->connection_manager;
             mgr->matching_scene.joycon_initialized_ptr = &mgr->joycon_initialized;
             mgr->matching_scene.network_initialized_ptr = &mgr->network_initialized;
             return matching_scene_init(&mgr->matching_scene);
@@ -36,6 +46,7 @@ static bool init_scene(unique_ptr<SceneManager> &mgr)
             LOG_DEBUG("SCENE_GAMEを初期化します。");
             mgr->game_scene.context = mgr->context;
             mgr->game_scene.joycon = mgr->joycon;
+            mgr->game_scene.connection_manager = &mgr->connection_manager;
             // Network は SceneManager から渡す
             return game_scene_init(&mgr->game_scene, &mgr->network);
 
@@ -105,6 +116,20 @@ bool scene_update(unique_ptr<SceneManager> &mgr, PlayerInput *player_input,
                     }
                     break;
                 case GAME_RESULT_RETURN_TITLE:
+                    if (mgr->network_initialized)
+                    {
+                        network_fini(&mgr->network);
+                        mgr->network_initialized = false;
+                    }
+                    return scene_change(mgr, SCENE_TITLE);
+                case GAME_RESULT_NETWORK_ERROR:
+                    // ネットワークエラー時はネットワークを終了してタイトルに戻る
+                    LOG_WARN("ネットワークエラーが発生しました。タイトルに戻ります。");
+                    if (mgr->network_initialized)
+                    {
+                        network_fini(&mgr->network);
+                        mgr->network_initialized = false;
+                    }
                     return scene_change(mgr, SCENE_TITLE);
                 default:
                     LOG_ERROR("不正なゲームシーン結果が返されました");

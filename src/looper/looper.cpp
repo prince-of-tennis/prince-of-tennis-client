@@ -1,6 +1,8 @@
 #include "looper.hpp"
 
 #include "common/player_input.h"
+#include "common/player_swing.h"
+#include "connection/connection_manager.hpp"
 #include "core/context.hpp"
 #include "input/input_manager.hpp"
 #include "joycon/joycon.hpp"
@@ -8,6 +10,10 @@
 #include "opengl/EasyGL.hpp"
 #include "util/log.hpp"
 #include "window_manager/window_manager.hpp"
+
+// コマンドライン引数から取得する関数（main.cppで定義）
+extern const char *get_network_hostname();
+extern int get_network_port();
 
 static Context g_context;
 static EasyGL g_opengl;
@@ -34,8 +40,9 @@ void context_init()
     g_context.background_g = 76;
     g_context.background_b = 76;
 
-    g_context.network_host = "localhost";
-    g_context.network_port = 5000;
+    // コマンドライン引数から取得
+    g_context.network_host = get_network_hostname();
+    g_context.network_port = static_cast<Uint16>(get_network_port());
 }
 
 /// @brief フレーム開始時の処理
@@ -102,6 +109,10 @@ bool looper_init(Looper *looper, eSceneType default_scene)
     looper->scene_manager->joycon = &looper->joycon;
     looper->scene_manager->joycon_initialized = false;
     looper->scene_manager->network_initialized = false;
+
+    // ConnectionManager初期化（別スレッドでジョイコン接続を管理）
+    connection_manager_init(&looper->scene_manager->connection_manager, &looper->joycon);
+
     if (!scene_manager_init(looper->scene_manager, default_scene))
     {
         LOG_ERROR("シーンの初期化に失敗しました");
@@ -138,6 +149,16 @@ void loop(Looper *looper)
 
             // スイングデータを取得
             player_swing = get_joycon_swing(&looper->joycon, g_context.player_id);
+
+            // Bボタンが押されている場合はロブショット
+            if (joycon_is_pressed(&looper->joycon, JOYCON_BTN_B))
+            {
+                player_swing.shot_type = SHOT_TYPE_LOB;
+            }
+            else
+            {
+                player_swing.shot_type = SHOT_TYPE_NORMAL;
+            }
 
             // スイング動作が閾値を超えたかチェック
             should_send_swing = joycon_has_significant_swing(&looper->joycon, &player_swing);
@@ -181,6 +202,9 @@ void looper_fini(Looper *looper)
 
     // Joy-Con が初期化されている場合のみ終了処理
     bool joycon_was_initialized = looper->scene_manager->joycon_initialized;
+
+    // ConnectionManager終了処理（スレッドを停止）
+    connection_manager_fini(&looper->scene_manager->connection_manager);
 
     // SDL_Quit()の前にSceneManagerを破棄する
     // （GameSceneのEZ_2D_Font, EZ_2D_ImageなどがOpenGLコンテキスト有効時に解放されるように）

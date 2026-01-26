@@ -8,6 +8,7 @@
 #include "common/player.h"
 #include "common/player_input.h"
 #include "common/player_swing.h"
+#include "connection/connection_manager.hpp"
 #include "core/context.hpp"
 #include "network/network.hpp"
 #include "opengl/2d/EZ_2d.h"
@@ -23,9 +24,10 @@ struct Joycon;
 // ゲームシーンの結果
 enum GameSceneResult
 {
-    GAME_RESULT_CONTINUE,     // ゲーム継続
-    GAME_RESULT_FINISHED,     // ゲーム終了
-    GAME_RESULT_RETURN_TITLE  // タイトルに戻る
+    GAME_RESULT_CONTINUE,      // ゲーム継続
+    GAME_RESULT_FINISHED,      // ゲーム終了
+    GAME_RESULT_RETURN_TITLE,  // タイトルに戻る
+    GAME_RESULT_NETWORK_ERROR  // ネットワークエラー
 };
 
 #define PLAYER_MAX 2
@@ -117,6 +119,11 @@ struct GameScene
     bool is_game_finished;    // 試合終了フラグ
     int winner_id;            // 勝者のプレイヤーID（-1: 未確定）
     GamePhase current_phase;  // 現在のゲームフェーズ
+
+    // 接続管理
+    ConnectionManager *connection_manager;
+    bool network_error;          // ネットワークエラーフラグ
+    int network_error_counter;   // エラー表示カウンター
 };
 
 /// @brief ゲームシーンの初期化
