@@ -117,20 +117,9 @@ PlayerSwing get_joycon_swing(Joycon *joycon, int player_id)
 // スイング動作が閾値を超えたかチェック
 bool joycon_has_significant_swing(Joycon *joycon, const PlayerSwing *current)
 {
-    // 加速度の合成値（ベクトルの大きさ）を計算
     float acc_magnitude =
         std::sqrt(current->acc_x * current->acc_x + current->acc_y * current->acc_y +
                   current->acc_z * current->acc_z);
-
-    // デバッグ：加速度値を定期的に出力（60フレームに1回）
-    static int debug_counter = 0;
-    if (debug_counter % 60 == 0)
-    {
-        LOG_DEBUG("加速度: x=" << current->acc_x << " y=" << current->acc_y
-                               << " z=" << current->acc_z << " magnitude=" << acc_magnitude
-                               << " 閾値=" << SWING_ACC_THRESHOLD);
-    }
-    debug_counter++;
 
     // 初回は初期化のみ
     if (joycon->cached_swing.player_id == -1)
@@ -147,11 +136,9 @@ bool joycon_has_significant_swing(Joycon *joycon, const PlayerSwing *current)
         return false;  // クールダウン中は送信しない
     }
 
-    // 閾値を超えたらスイングと判定
     if (acc_magnitude > SWING_ACC_THRESHOLD)
     {
-        LOG_SUCCESS("スイング検出! magnitude=" << acc_magnitude);
-        joycon->last_swing_time_ms = current_time;  // 最後のswing時刻を更新
+        joycon->last_swing_time_ms = current_time;
         return true;
     }
 
