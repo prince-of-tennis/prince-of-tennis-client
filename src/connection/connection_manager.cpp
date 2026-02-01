@@ -1,5 +1,7 @@
 #include "connection_manager.hpp"
 
+#include <string.h>
+
 #include "util/log.hpp"
 
 // ジョイコン接続スレッド関数
@@ -24,6 +26,9 @@ static int joycon_connect_thread_func(void *data)
 
             LOG_DEBUG("ジョイコン接続を試行中...");
 
+            // joyconlib_tをクリーンな状態にしてから接続を試行
+            memset(&mgr->joycon->joycon, 0, sizeof(joyconlib_t));
+
             if (joycon_init(mgr->joycon))
             {
                 mgr->joycon_state.store(ConnectionState::CONNECTED);
@@ -33,7 +38,6 @@ static int joycon_connect_thread_func(void *data)
             {
                 mgr->joycon_state.store(ConnectionState::FAILED);
                 LOG_WARN("ジョイコン接続失敗、再試行します...");
-                joycon_fini(mgr->joycon);
                 SDL_Delay(RETRY_DELAY_MS);
                 continue;
             }

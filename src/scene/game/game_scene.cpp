@@ -127,6 +127,12 @@ static void update_joycon_connection(GameScene *scene)
     if (scene->joycon && connection_manager_check_joycon_disconnected(scene->connection_manager))
     {
         LOG_WARN("ジョイコン切断、再接続開始");
+        // メインループのジョイコンアクセスを停止させる
+        if (scene->joycon_initialized_ptr)
+        {
+            *scene->joycon_initialized_ptr = false;
+        }
+        joycon_fini(scene->joycon);
         scene->joycon = nullptr;
         connection_manager_request_joycon_reconnect(scene->connection_manager);
     }
@@ -134,6 +140,10 @@ static void update_joycon_connection(GameScene *scene)
     if (!scene->joycon && connection_manager_is_joycon_connected(scene->connection_manager))
     {
         scene->joycon = scene->connection_manager->joycon;
+        if (scene->joycon_initialized_ptr)
+        {
+            *scene->joycon_initialized_ptr = true;
+        }
         LOG_SUCCESS("ジョイコン再接続完了");
     }
 }

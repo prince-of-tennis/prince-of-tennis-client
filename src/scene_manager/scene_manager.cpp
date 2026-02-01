@@ -47,6 +47,7 @@ static bool init_scene(unique_ptr<SceneManager> &mgr)
             mgr->game_scene.context = mgr->context;
             mgr->game_scene.joycon = mgr->joycon;
             mgr->game_scene.connection_manager = &mgr->connection_manager;
+            mgr->game_scene.joycon_initialized_ptr = &mgr->joycon_initialized;
             // Network は SceneManager から渡す
             return game_scene_init(&mgr->game_scene, &mgr->network);
 
