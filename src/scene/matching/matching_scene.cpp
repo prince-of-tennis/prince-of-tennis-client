@@ -127,7 +127,7 @@ static MatchingResult update_complete_phase(MatchingScene *scene)
 
 bool matching_scene_init(MatchingScene *scene)
 {
-    scene->font = EZ_2D_CreateFont("fonts/font.otf", 48);
+    scene->font = EZ_2D_CreateFont("assets/fonts/font.otf", 48);
     if (!scene->font) return false;
 
     scene->shader = EZ_CreateShader();
@@ -145,7 +145,7 @@ bool matching_scene_init(MatchingScene *scene)
 
     if (!audio_init(&scene->audio)) return false;
 
-    scene->se_decide = audio_load_se(&scene->audio, "audio/se/select.mp3");
+    scene->se_decide = audio_load_se(&scene->audio, "assets/audio/se/select.mp3");
 
     scene->retry_count = 0;
     scene->retry_wait_frames = 0;

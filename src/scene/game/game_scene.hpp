@@ -122,6 +122,7 @@ struct GameScene
 
     // 接続管理
     ConnectionManager *connection_manager;
+    bool *joycon_initialized_ptr;  // SceneManagerのjoycon_initializedへのポインタ
     bool network_error;          // ネットワークエラーフラグ
     int network_error_counter;   // エラー表示カウンター
 };

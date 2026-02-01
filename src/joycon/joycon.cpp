@@ -52,7 +52,11 @@ PlayerInput get_joycon(Joycon *joycon, int player_id)
 
     player_input.player_id = player_id;
 
-    joycon_get_state(&joycon->joycon);
+    joycon_err err = joycon_get_state(&joycon->joycon);
+    if (err != JOYCON_ERR_NONE)
+    {
+        return player_input;
+    }
 
     if (joycon->joycon.stick.x < -TRIGGER_THRESHOLD)
     {
@@ -104,7 +108,11 @@ PlayerSwing get_joycon_swing(Joycon *joycon, int player_id)
 
     player_swing.player_id = player_id;
 
-    joycon_get_state(&joycon->joycon);
+    joycon_err err = joycon_get_state(&joycon->joycon);
+    if (err != JOYCON_ERR_NONE)
+    {
+        return player_swing;
+    }
 
     // 加速度データを取得
     player_swing.acc_x = joycon->joycon.axis[0].acc_x;

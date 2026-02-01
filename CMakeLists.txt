@@ -7,9 +7,6 @@ project(SuperDimensionalTennisClient C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_compile_definitions(DEBUG=1)
-add_compile_definitions(EZ_LOG_ENABLED=1)
-
 # 2. ライブラリの検索
 # -----------------
 # システム (apt-get) でインストールしたライブラリを探す
@@ -66,4 +63,4 @@ target_link_libraries(client PRIVATE
 )
 
 # (オプション) アセットフォルダを実行ファイルと同じ場所にコピー
-file(COPY assets/ DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
