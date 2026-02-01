@@ -9,7 +9,7 @@ constexpr float STICK_THRESHOLD = 0.5f;
 
 bool title_scene_init(TitleScene *scene)
 {
-    scene->font = EZ_2D_CreateFont("fonts/font.otf", 48);
+    scene->font = EZ_2D_CreateFont("assets/fonts/font.otf", 48);
     if (!scene->font) return false;
 
     scene->shader = EZ_CreateShader();
@@ -25,15 +25,15 @@ bool title_scene_init(TitleScene *scene)
     scene->light = EZ_CreateLight();
     EZ_LightSetPosition(scene->light, 10.0f, 20.0f, 10.0f);
 
-    scene->court_object = EZ_CreateObject("obj/tennis_court.obj", "img/container.jpeg");
+    scene->court_object = EZ_CreateObject("assets/obj/tennis_court.obj", "assets/img/container.jpeg");
     if (!scene->court_object) return false;
     EZ_ObjectSetPosition(scene->court_object, 0.0f, 0.0f, 0.0f);
     EZ_ObjectSetScale(scene->court_object, TENNIS_COURT_SCALE, TENNIS_COURT_SCALE, TENNIS_COURT_SCALE);
 
     if (!audio_init(&scene->audio)) return false;
 
-    scene->se_cursor_move = audio_load_se(&scene->audio, "audio/se/move_cursor.mp3");
-    scene->se_decide = audio_load_se(&scene->audio, "audio/se/select.mp3");
+    scene->se_cursor_move = audio_load_se(&scene->audio, "assets/audio/se/move_cursor.mp3");
+    scene->se_decide = audio_load_se(&scene->audio, "assets/audio/se/select.mp3");
 
     scene->blink_counter = 0;
     scene->show_start_message = true;

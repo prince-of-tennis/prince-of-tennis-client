@@ -30,7 +30,7 @@ static bool init_objects(GameScene *scene)
     scene->shader = EZ_CreateShader();
     if (!scene->shader) return false;
 
-    scene->ball_object = EZ_CreateObject("obj/ball.obj", "img/container.jpeg");
+    scene->ball_object = EZ_CreateObject("assets/obj/ball.obj", "assets/img/container.jpeg");
     if (!scene->ball_object) return false;
 
     scene->ball_data.point = {0.0f, 2.0f, 0.0f};
@@ -39,7 +39,7 @@ static bool init_objects(GameScene *scene)
 
     for (int i = 0; i < PLAYER_MAX; i++)
     {
-        scene->player_objects[i] = EZ_CreateObject("obj/player.obj", "img/container.jpeg");
+        scene->player_objects[i] = EZ_CreateObject("assets/obj/player.obj", "assets/img/container.jpeg");
         if (!scene->player_objects[i]) return false;
 
         scene->player_data[i].point.x = PLAYER_INITIAL_X[i];
@@ -49,12 +49,12 @@ static bool init_objects(GameScene *scene)
         EZ_ObjectSetScale(scene->player_objects[i], 1.0, 1.0, 1.0);
     }
 
-    scene->court_object = EZ_CreateObject("obj/tennis_court.obj", "img/container.jpeg");
+    scene->court_object = EZ_CreateObject("assets/obj/tennis_court.obj", "assets/img/container.jpeg");
     if (!scene->court_object) return false;
     EZ_ObjectSetPosition(scene->court_object, 0.0f, 0.0f, 0.0f);
     EZ_ObjectSetScale(scene->court_object, TENNIS_COURT_SCALE, TENNIS_COURT_SCALE, TENNIS_COURT_SCALE);
 
-    scene->ground_object = EZ_CreateObject("obj/ground.obj", "img/ground.png");
+    scene->ground_object = EZ_CreateObject("assets/obj/ground.obj", "assets/img/ground.png");
     if (!scene->ground_object) return false;
     EZ_ObjectSetPosition(scene->ground_object, 0.0f, 0.0f, 0.0f);
     EZ_ObjectSetScale(scene->ground_object, 1.0f, 1.0f, 1.0f);
@@ -80,7 +80,7 @@ bool game_scene_init(GameScene *scene, Network *network)
 
     scene->server_sync_counter = 0;
 
-    scene->font = EZ_2D_CreateFont("fonts/font.otf", 48);
+    scene->font = EZ_2D_CreateFont("assets/fonts/font.otf", 48);
     if (!scene->font)
     {
         LOG_ERROR("フォント初期化失敗");
@@ -96,8 +96,8 @@ bool game_scene_init(GameScene *scene, Network *network)
         return false;
     }
 
-    scene->se_hit_ball = audio_load_se(&scene->audio, "audio/se/hit_ball.mp3");
-    scene->se_yatta = audio_load_se(&scene->audio, "audio/se/yatta.mp3");
+    scene->se_hit_ball = audio_load_se(&scene->audio, "assets/audio/se/hit_ball.mp3");
+    scene->se_yatta = audio_load_se(&scene->audio, "assets/audio/se/yatta.mp3");
     scene->prev_hit_count = 0;
 
     ability_manager_init(&scene->ability_manager);
